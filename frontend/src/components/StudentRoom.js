@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import '../output.css'
+import { useEffect, useState } from "react";
+import { getChallenges, getSubmissions, submitSolution } from '../api';
+import '../output.css';
 
 export default function StudentRoom() {
   const [challenges, setChallenges] = useState([]);
@@ -9,53 +10,17 @@ export default function StudentRoom() {
   const [submissionCode, setSubmissionCode] = useState("");
 
   useEffect(() => {
-    // Mock data - replace with actual API calls
-    setChallenges([
-      {
-        id: 1,
-        title: "React Component Challenge",
-        company: "TechCorp",
-        description: "Create a responsive login form using React and Tailwind CSS",
-        difficulty: "Medium",
-        deadline: "2025-09-15",
-        points: 100
-      },
-      {
-        id: 2,
-        title: "Algorithm Challenge",
-        company: "DataSoft",
-        description: "Implement a binary search algorithm with optimal time complexity",
-        difficulty: "Hard",
-        deadline: "2025-09-20",
-        points: 150
-      },
-      {
-        id: 3,
-        title: "CSS Animation Task",
-        company: "DesignHub",
-        description: "Create smooth animations for a landing page hero section",
-        difficulty: "Easy",
-        deadline: "2025-09-10",
-        points: 75
+    async function fetchData() {
+      try {
+        const challengesData = await getChallenges();
+        setChallenges(challengesData);
+        const submissionsData = await getSubmissions();
+        setSubmissions(submissionsData);
+      } catch (err) {
+        // fallback or error handling
       }
-    ]);
-
-    setSubmissions([
-      {
-        id: 1,
-        challengeTitle: "React Component Challenge",
-        status: "Submitted",
-        score: 85,
-        submittedAt: "2025-08-25"
-      },
-      {
-        id: 2,
-        challengeTitle: "Previous Algorithm Task",
-        status: "Reviewed",
-        score: 92,
-        submittedAt: "2025-08-20"
-      }
-    ]);
+    }
+    fetchData();
   }, []);
 
   const handleSubmit = (challengeId) => {
@@ -63,20 +28,16 @@ export default function StudentRoom() {
       alert("Please enter your solution code");
       return;
     }
-    
-    // Mock submission - replace with actual API call
-    const newSubmission = {
-      id: submissions.length + 1,
-      challengeTitle: challenges.find(c => c.id === challengeId)?.title,
-      status: "Submitted",
-      score: null,
-      submittedAt: new Date().toISOString().split('T')[0]
-    };
-    
-    setSubmissions([newSubmission, ...submissions]);
-    setSubmissionCode("");
-    setSelectedChallenge(null);
-    alert("Solution submitted successfully!");
+    submitSolution(challengeId, submissionCode)
+      .then(() => {
+        alert("Solution submitted successfully!");
+        setSubmissionCode("");
+        setSelectedChallenge(null);
+        // Optionally refresh submissions
+      })
+      .catch(() => {
+        alert("Error submitting solution. Please try again.");
+      });
   };
 
   const getDifficultyColor = (difficulty) => {

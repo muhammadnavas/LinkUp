@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getChallenges, getSubmissions } from '../api';
 
 export default function CompanyRoom() {
   const [challenges, setChallenges] = useState([]);
@@ -15,52 +16,17 @@ export default function CompanyRoom() {
   });
 
   useEffect(() => {
-    // Mock data - replace with actual API calls
-    setChallenges([
-      {
-        id: 1,
-        title: "React Component Challenge",
-        description: "Create a responsive login form using React and Tailwind CSS",
-        difficulty: "Medium",
-        deadline: "2025-09-15",
-        points: 100,
-        submissions: 12,
-        status: "Active"
-      },
-      {
-        id: 2,
-        title: "Database Design Task",
-        description: "Design a normalized database schema for an e-commerce platform",
-        difficulty: "Hard",
-        deadline: "2025-09-20",
-        points: 150,
-        submissions: 8,
-        status: "Active"
+    async function fetchData() {
+      try {
+        const challengesRes = await getChallenges();
+        setChallenges(challengesRes.data);
+        const submissionsRes = await getSubmissions();
+        setSubmissions(submissionsRes.data);
+      } catch (err) {
+        // fallback or error handling
       }
-    ]);
-
-    setSubmissions([
-      {
-        id: 1,
-        challengeTitle: "React Component Challenge",
-        studentName: "John Doe",
-        studentEmail: "john.doe@email.com",
-        submittedAt: "2025-08-25",
-        code: "import React from 'react';\n\nfunction LoginForm() {\n  return (\n    <form className='bg-white p-6 rounded'>\n      <input type='email' placeholder='Email' />\n      <input type='password' placeholder='Password' />\n      <button type='submit'>Login</button>\n    </form>\n  );\n}",
-        status: "Pending",
-        score: null
-      },
-      {
-        id: 2,
-        challengeTitle: "React Component Challenge",
-        studentName: "Jane Smith",
-        studentEmail: "jane.smith@email.com",
-        submittedAt: "2025-08-24",
-        code: "import React, { useState } from 'react';\n\nfunction LoginForm() {\n  const [email, setEmail] = useState('');\n  const [password, setPassword] = useState('');\n\n  return (\n    <div className='max-w-md mx-auto'>\n      <form className='bg-white p-8 rounded-lg shadow'>\n        <h2 className='text-2xl mb-4'>Login</h2>\n        <input \n          type='email' \n          value={email}\n          onChange={(e) => setEmail(e.target.value)}\n          className='w-full p-2 mb-4 border rounded'\n          placeholder='Email' \n        />\n        <input \n          type='password'\n          value={password}\n          onChange={(e) => setPassword(e.target.value)} \n          className='w-full p-2 mb-4 border rounded'\n          placeholder='Password' \n        />\n        <button \n          type='submit'\n          className='w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700'\n        >\n          Login\n        </button>\n      </form>\n    </div>\n  );\n}",
-        status: "Reviewed",
-        score: 92
-      }
-    ]);
+    }
+    fetchData();
   }, []);
 
   const handleCreateChallenge = (e) => {
@@ -69,15 +35,9 @@ export default function CompanyRoom() {
       alert("Please fill all required fields");
       return;
     }
-
-    const challenge = {
-      id: challenges.length + 1,
-      ...newChallenge,
-      submissions: 0,
-      status: "Active"
-    };
-
-    setChallenges([challenge, ...challenges]);
+    // There is no createChallenge API, so show an alert for now
+    alert("Challenge creation is not implemented in the current API.");
+    setShowCreateForm(false);
     setNewChallenge({
       title: "",
       description: "",
@@ -85,18 +45,12 @@ export default function CompanyRoom() {
       deadline: "",
       points: 100
     });
-    setShowCreateForm(false);
-    alert("Challenge created successfully!");
   };
 
   const handleScoreSubmission = (submissionId, score) => {
-    setSubmissions(prev => prev.map(sub => 
-      sub.id === submissionId 
-        ? { ...sub, score: parseInt(score), status: "Reviewed" }
-        : sub
-    ));
-    setSelectedSubmission(null);
-    alert("Submission scored successfully!");
+  // There is no reviewSubmission API, so show an alert for now
+  alert("Submission review is not implemented in the current API.");
+  setSelectedSubmission(null);
   };
 
   const getDifficultyColor = (difficulty) => {

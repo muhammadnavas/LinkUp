@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getChallenges, getSubmissions } from '../api';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -10,36 +11,22 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // Mock data - replace with actual API calls
-    setStats({
-      totalChallenges: 15,
-      completedChallenges: 8,
-      averageScore: 87,
-      rank: 42,
-      recentActivity: [
-        {
-          id: 1,
-          type: "submission",
-          title: "React Component Challenge",
-          date: "2025-08-28",
-          score: 92
-        },
-        {
-          id: 2,
-          type: "challenge",
-          title: "New Algorithm Challenge Available",
-          date: "2025-08-27",
-          company: "TechCorp"
-        },
-        {
-          id: 3,
-          type: "review",
-          title: "Database Design Task Reviewed",
-          date: "2025-08-26",
-          score: 78
-        }
-      ]
-    });
+    async function fetchStats() {
+      try {
+        const challengesRes = await getChallenges();
+        const submissionsRes = await getSubmissions();
+        setStats({
+          totalChallenges: challengesRes.data.length,
+          completedChallenges: submissionsRes.data.filter(s => s.status === 'Reviewed').length,
+          averageScore: submissionsRes.data.length ? Math.round(submissionsRes.data.reduce((acc, s) => acc + (s.score || 0), 0) / submissionsRes.data.length) : 0,
+          rank: 42, // Placeholder, update if backend provides rank
+          recentActivity: submissionsRes.data.slice(0, 5)
+        });
+      } catch (err) {
+        // fallback or error handling
+      }
+    }
+    fetchStats();
   }, []);
 
   const getActivityIcon = (type) => {
