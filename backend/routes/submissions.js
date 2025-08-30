@@ -134,4 +134,70 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+
+// Add this route to submissions.js
+router.patch('/:id/status', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'company') {
+      return res.status(403).json({ success: false, error: 'Access denied' });
+    }
+
+    const { status } = req.body;
+    const { id } = req.params;
+
+    if (!['pending', 'reviewing', 'accepted', 'rejected'].includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status' });
+    }
+
+    const submission = await Submission.findById(id)
+      .populate('challenge', 'createdBy');
+
+    if (!submission) {
+      return res.status(404).json({ success: false, error: 'Submission not found' });
+    }
+
+    // Check if the company owns this challenge
+    if (submission.challenge.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, error: 'Access denied' });
+    }
+
+    submission.status = status;
+    submission.reviewedAt = new Date();
+    submission.reviewedBy = req.user._id;
+    
+    await submission.save();
+
+    res.json({ success: true, data: submission });
+
+  } catch (error) {
+    console.error('Error updating submission status:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Add this route to submissions.js
+router.get('/company', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'company') {
+      return res.status(403).json({ success: false, error: 'Access denied' });
+    }
+
+    // Get challenges created by this company
+    const companyChallenges = await Challenge.find({ createdBy: req.user._id });
+    const challengeIds = companyChallenges.map(c => c._id);
+
+    // Get submissions for company's challenges
+    const submissions = await Submission.find({ challenge: { $in: challengeIds } })
+      .populate('user', 'name email')
+      .populate('challenge', 'title points difficulty')
+      .sort({ submittedAt: -1 });
+
+    res.json({ success: true, data: submissions });
+
+  } catch (error) {
+    console.error('Error fetching company submissions:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 module.exports = router;

@@ -1,397 +1,525 @@
 import { useEffect, useState } from "react";
-import { getChallenges, getSubmissions } from '../api';
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../App";
 
 export default function CompanyRoom() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const [challenges, setChallenges] = useState([]);
   const [submissions, setSubmissions] = useState([]);
-  const [activeTab, setActiveTab] = useState("challenges");
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
-  const [newChallenge, setNewChallenge] = useState({
-    title: "",
-    description: "",
-    difficulty: "Medium",
-    deadline: "",
-    points: 100
+  const [stats, setStats] = useState({
+    totalChallenges: 0,
+    totalSubmissions: 0,
+    pendingReviews: 0,
+    completedReviews: 0,
+    recentActivity: []
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const challengesRes = await getChallenges();
-        setChallenges(challengesRes.data);
-        const submissionsRes = await getSubmissions();
-        setSubmissions(submissionsRes.data);
-      } catch (err) {
-        // fallback or error handling
-      }
-    }
     fetchData();
   }, []);
 
-  const handleCreateChallenge = (e) => {
-    e.preventDefault();
-    if (!newChallenge.title || !newChallenge.description || !newChallenge.deadline) {
-      alert("Please fill all required fields");
-      return;
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Fetch company's challenges
+      const challengesRes = await fetch('http://localhost:5000/api/challenges', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Fetch company dashboard stats
+      const statsRes = await fetch('http://localhost:5000/api/dashboard/company-stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Fetch submissions for company's challenges
+      const submissionsRes = await fetch('http://localhost:5000/api/submissions/company', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (challengesRes.ok && statsRes.ok) {
+        const challengesData = await challengesRes.json();
+        const statsData = await statsRes.json();
+        
+        if (challengesData.success) {
+          // Filter challenges created by this company
+          const companyChallenges = challengesData.data.filter(c => c.createdBy === user._id);
+          setChallenges(companyChallenges);
+        }
+        
+        if (statsData.success) {
+          setStats(statsData.data);
+        }
+
+        if (submissionsRes.ok) {
+          const submissionsData = await submissionsRes.json();
+          if (submissionsData.success) {
+            setSubmissions(submissionsData.data);
+          }
+        }
+      } else {
+        setError('Failed to load data');
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load data. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    // There is no createChallenge API, so show an alert for now
-    alert("Challenge creation is not implemented in the current API.");
-    setShowCreateForm(false);
-    setNewChallenge({
-      title: "",
-      description: "",
-      difficulty: "Medium",
-      deadline: "",
-      points: 100
-    });
   };
 
-  const handleScoreSubmission = (submissionId, score) => {
-  // There is no reviewSubmission API, so show an alert for now
-  alert("Submission review is not implemented in the current API.");
-  setSelectedSubmission(null);
+  const handleUpdateSubmissionStatus = async (submissionId, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/submissions/${submissionId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        // Refresh data after status update
+        fetchData();
+      } else {
+        setError('Failed to update submission status');
+      }
+    } catch (err) {
+      console.error('Error updating submission:', err);
+      setError('Failed to update submission status');
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const statusStyles = {
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'reviewing': 'bg-blue-100 text-blue-800',
+      'accepted': 'bg-green-100 text-green-800',
+      'rejected': 'bg-red-100 text-red-800'
+    };
+    
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
   };
 
   const getDifficultyColor = (difficulty) => {
     switch(difficulty) {
-      case "Easy": return "text-green-600 bg-green-100";
-      case "Medium": return "text-yellow-600 bg-yellow-100";
-      case "Hard": return "text-red-600 bg-red-100";
-      default: return "text-gray-600 bg-gray-100";
+      case 'Easy': return 'bg-green-100 text-green-800';
+      case 'Medium': return 'bg-yellow-100 text-yellow-800';
+      case 'Hard': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case "Pending": return "text-yellow-600 bg-yellow-100";
-      case "Reviewed": return "text-green-600 bg-green-100";
-      case "Active": return "text-blue-600 bg-blue-100";
-      default: return "text-gray-600 bg-gray-100";
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    localStorage.removeItem("role");
-    window.location.reload();
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Company Dashboard</h1>
-          <button 
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg font-semibold mb-4">{error}</p>
+          <button
+            onClick={fetchData}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
-            Logout
+            Retry
           </button>
         </div>
+      </div>
+    );
+  }
 
-        {/* Navigation Tabs */}
-        <div className="flex space-x-1 mb-6">
-          {["challenges", "submissions"].map((tab) => (
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            Company Dashboard - {user?.name}
+          </h1>
+          
+          {/* Tab Navigation */}
+          <div className="flex space-x-1">
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 rounded-lg font-medium transition ${
-                activeTab === tab
+              onClick={() => setActiveTab("dashboard")}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                activeTab === "dashboard"
                   ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-blue-50"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              Dashboard
             </button>
-          ))}
+            <button
+              onClick={() => setActiveTab("challenges")}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                activeTab === "challenges"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+              }`}
+            >
+              My Challenges
+            </button>
+            <button
+              onClick={() => setActiveTab("submissions")}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                activeTab === "submissions"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+              }`}
+            >
+              Submissions
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Dashboard Tab */}
+        {activeTab === "dashboard" && (
+          <div className="space-y-8">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Challenges</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.totalChallenges}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Submissions</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.totalSubmissions}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.pendingReviews}</p>
+                    <p className="text-xs text-orange-600">Need attention</p>
+                  </div>
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Completed Reviews</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.completedReviews}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Recent Activity */}
+              <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Submissions</h2>
+                <div className="space-y-4">
+                  {stats.recentActivity.length > 0 ? (
+                    stats.recentActivity.map((activity) => (
+                      <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-sm font-medium text-gray-800">{activity.title}</h3>
+                          {activity.challengeTitle && (
+                            <p className="text-xs text-gray-600 mt-1">Challenge: {activity.challengeTitle}</p>
+                          )}
+                          {activity.userName && (
+                            <p className="text-xs text-gray-600 mt-1">Student: {activity.userName}</p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(activity.date).toLocaleDateString()}
+                          </p>
+                          <div className="flex items-center space-x-2 mt-2">
+                            {activity.status && getStatusBadge(activity.status)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                      <p className="text-gray-500">No recent submissions</p>
+                      <p className="text-gray-400 text-sm mt-1">Create challenges to start receiving submissions</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+                <div className="space-y-3">
+                  <button 
+                    onClick={() => navigate('/create-challenge')}
+                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+                  >
+                    Create New Challenge
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('challenges')}
+                    className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
+                  >
+                    Manage Challenges
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('submissions')}
+                    className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
+                  >
+                    Review Submissions
+                  </button>
+                  <button 
+                    onClick={() => navigate('/analytics')}
+                    className="w-full px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-medium"
+                  >
+                    View Analytics
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Challenges Tab */}
         {activeTab === "challenges" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold text-gray-800">My Challenges</h2>
+              <h2 className="text-2xl font-bold text-gray-800">My Challenges</h2>
               <button
-                onClick={() => setShowCreateForm(true)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                onClick={() => navigate('/create-challenge')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
               >
                 Create New Challenge
               </button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {challenges.map((challenge) => (
-                <div key={challenge.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">{challenge.title}</h3>
-                    <div className="flex flex-col gap-2">
+            {challenges.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {challenges.map((challenge) => (
+                  <div key={challenge._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="text-lg font-semibold text-gray-800 line-clamp-2">
+                        {challenge.title}
+                      </h3>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(challenge.difficulty)}`}>
                         {challenge.difficulty}
                       </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(challenge.status)}`}>
-                        {challenge.status}
-                      </span>
+                    </div>
+                    
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {challenge.description}
+                    </p>
+                    
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                      <span>Posted: {new Date(challenge.createdAt).toLocaleDateString()}</span>
+                      <span>{challenge.submissions?.length || 0} submissions</span>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => navigate(`/challenge/${challenge._id}`)}
+                        className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm font-medium"
+                      >
+                        View Details
+                      </button>
+                      <button
+                        onClick={() => navigate(`/edit-challenge/${challenge._id}`)}
+                        className="px-3 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition text-sm font-medium"
+                      >
+                        Edit
+                      </button>
                     </div>
                   </div>
-                  
-                  <p className="text-gray-600 mb-4 line-clamp-3">{challenge.description}</p>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Deadline:</span>
-                      <span className="font-medium">{challenge.deadline}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Points:</span>
-                      <span className="font-medium text-blue-600">{challenge.points}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Submissions:</span>
-                      <span className="font-medium text-green-600">{challenge.submissions}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges yet</h3>
+                <p className="text-gray-500 mb-6">Start by creating your first coding challenge</p>
+                <button
+                  onClick={() => navigate('/create-challenge')}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                >
+                  Create Your First Challenge
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {/* Submissions Tab */}
         {activeTab === "submissions" && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-semibold text-gray-800">Student Submissions</h2>
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Challenge</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {submissions.map((submission) => (
-                    <tr key={submission.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {submission.challengeTitle}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{submission.studentName}</div>
-                          <div className="text-sm text-gray-500">{submission.studentEmail}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(submission.status)}`}>
-                          {submission.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {submission.score ? `${submission.score}/100` : "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {submission.submittedAt}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => setSelectedSubmission(submission)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Review
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Create Challenge Modal */}
-        {showCreateForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-2xl w-full">
-              <form onSubmit={handleCreateChallenge} className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Create New Challenge</h2>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="text-gray-500 hover:text-gray-700 text-xl"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Challenge Title *
-                    </label>
-                    <input
-                      type="text"
-                      value={newChallenge.title}
-                      onChange={(e) => setNewChallenge({...newChallenge, title: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Description *
-                    </label>
-                    <textarea
-                      value={newChallenge.description}
-                      onChange={(e) => setNewChallenge({...newChallenge, description: e.target.value})}
-                      className="w-full p-3 h-32 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Difficulty
-                      </label>
-                      <select
-                        value={newChallenge.difficulty}
-                        onChange={(e) => setNewChallenge({...newChallenge, difficulty: e.target.value})}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="Easy">Easy</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Hard">Hard</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Deadline *
-                      </label>
-                      <input
-                        type="date"
-                        value={newChallenge.deadline}
-                        onChange={(e) => setNewChallenge({...newChallenge, deadline: e.target.value})}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Points
-                      </label>
-                      <input
-                        type="number"
-                        value={newChallenge.points}
-                        onChange={(e) => setNewChallenge({...newChallenge, points: parseInt(e.target.value)})}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        min="1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 mt-6">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    Create Challenge
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Review Submission Modal */}
-        {selectedSubmission && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800">{selectedSubmission.challengeTitle}</h2>
-                    <p className="text-gray-600">By {selectedSubmission.studentName}</p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedSubmission(null)}
-                    className="text-gray-500 hover:text-gray-700 text-xl"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Student's Solution:</h3>
-                  <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
-                    <code>{selectedSubmission.code}</code>
-                  </pre>
-                </div>
-
-                {selectedSubmission.status === "Pending" && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Score this submission:</h3>
-                    <div className="flex items-center space-x-4">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        placeholder="Score (0-100)"
-                        className="w-32 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        id={`score-${selectedSubmission.id}`}
-                      />
-                      <button
-                        onClick={() => {
-                          const scoreInput = document.getElementById(`score-${selectedSubmission.id}`);
-                          const score = scoreInput.value;
-                          if (score >= 0 && score <= 100) {
-                            handleScoreSubmission(selectedSubmission.id, score);
-                          } else {
-                            alert("Please enter a score between 0 and 100");
-                          }
-                        }}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                      >
-                        Submit Score
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {selectedSubmission.status === "Reviewed" && (
-                  <div className="mb-6">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <h3 className="text-lg font-semibold text-green-800">Already Reviewed</h3>
-                      <p className="text-green-600">Score: {selectedSubmission.score}/100</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => setSelectedSubmission(null)}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    Close
-                  </button>
-                </div>
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-800">Submissions to Review</h2>
+              <div className="flex space-x-2 text-sm text-gray-600">
+                <span>{submissions.filter(s => s.status === 'pending').length} pending</span>
+                <span>•</span>
+                <span>{submissions.filter(s => s.status === 'reviewing').length} in review</span>
               </div>
             </div>
+
+            {submissions.length > 0 ? (
+              <div className="space-y-4">
+                {submissions.map((submission) => (
+                  <div key={submission._id} className="bg-white rounded-lg shadow-md p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-800">
+                            {submission.challengeTitle || 'Challenge Submission'}
+                          </h3>
+                          {getStatusBadge(submission.status)}
+                        </div>
+                        <p className="text-gray-600 text-sm mb-2">
+                          Submitted by: <span className="font-medium">{submission.userName}</span>
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          Submitted on: {new Date(submission.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {submission.notes && (
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-700">
+                          <span className="font-medium">Student Notes:</span> {submission.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => navigate(`/submission/${submission._id}`)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm font-medium"
+                      >
+                        View Submission
+                      </button>
+                      
+                      {submission.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'reviewing')}
+                            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition text-sm font-medium"
+                          >
+                            Start Review
+                          </button>
+                          <button
+                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'accepted')}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm font-medium"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'rejected')}
+                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm font-medium"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      
+                      {submission.status === 'reviewing' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'accepted')}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm font-medium"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'rejected')}
+                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm font-medium"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white rounded-lg shadow-md">
+                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No submissions yet</h3>
+                <p className="text-gray-500 mb-6">When students submit solutions to your challenges, they'll appear here for review</p>
+                <button
+                  onClick={() => setActiveTab('challenges')}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                >
+                  View My Challenges
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

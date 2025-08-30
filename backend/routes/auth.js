@@ -144,9 +144,8 @@ router.post('/register', registerValidation, registerUser);
 // @route   POST /api/auth/login
 router.post('/login', loginValidation, loginUser);
 
-// @route   GET /api/auth/me
-router.get('/me', authMiddleware, getCurrentUser);
-
+// @route   GET /api/auth/verify
+router.get('/verify', authMiddleware, getCurrentUser);
 // @route   PUT /api/auth/profile
 router.put('/profile', authMiddleware, updateProfileValidation, updateProfile);
 

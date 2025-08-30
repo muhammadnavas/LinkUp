@@ -7,7 +7,7 @@ export default function Home() {
       <div className="container mx-auto px-6 py-16">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            Welcome to <span className="text-blue-600">UpLink</span>
+            Welcome to <span className="text-blue-600">LinkUp</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Bridging the gap between talented students and innovative companies. 
@@ -67,7 +67,7 @@ export default function Home() {
 
         {/* How It Works Section */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-12">How UpLink Works</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-12">How LinkUp Works</h2>
           <div className="grid md:grid-cols-2 gap-12">
             {/* For Students */}
             <div className="bg-white rounded-xl shadow-lg p-8">
@@ -183,7 +183,7 @@ export default function Home() {
         <div className="text-center bg-blue-600 rounded-xl shadow-lg p-12 text-white">
           <h2 className="text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of students and companies already using UpLink to connect talent with opportunity.
+            Join thousands of students and companies already using LinkUp to connect talent with opportunity.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition shadow-lg">

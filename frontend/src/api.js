@@ -1,25 +1,119 @@
+// api/index.js or api.js
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-import axios from "axios";
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` })
+  };
+};
 
-const API = axios.create({
-  baseURL: "http://localhost:5000/api",
-});
+// Helper function to handle API responses
+const handleResponse = async (response) => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
 
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+// Get all challenges
+export const getChallenges = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/challenges`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error fetching challenges:', error);
+    throw error;
+  }
+};
 
-// Auth
-export const registerUser = (data) => API.post("/auth/register", data);
-export const loginUser = (data) => API.post("/auth/login", data);
+// Get specific challenge by ID
+export const getChallenge = async (challengeId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error fetching challenge:', error);
+    throw error;
+  }
+};
 
-// Challenges
-export const getChallenges = (params) => API.get("/challenges", { params });
-export const getChallenge = (id) => API.get(`/challenges/${id}`);
+// Submit solution to challenge
+export const submitSolution = async (challengeId, solutionData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/submit`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(solutionData),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error submitting solution:', error);
+    throw error;
+  }
+};
 
-// Submissions
-export const submitSolution = (challengeId, data) => API.post(`/submissions/${challengeId}`, data);
-export const getSubmissions = (params) => API.get("/submissions", { params });
-export const getSubmission = (id) => API.get(`/submissions/${id}`);
+// Get user's submissions for a challenge
+export const getSubmissions = async (challengeId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/challenges/${challengeId}/submissions`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    throw error;
+  }
+};
+
+// Auth functions
+export const login = async (credentials) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error logging in:', error);
+    throw error;
+  }
+};
+
+export const register = async (userData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error registering:', error);
+    throw error;
+  }
+};
+
+export const verifyToken = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    });
+    return await handleResponse(response);
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    throw error;
+  }
+};

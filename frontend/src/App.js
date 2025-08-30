@@ -39,13 +39,13 @@ const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const token = sessionStorage.getItem('token');
+      const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -53,16 +53,21 @@ const AuthProvider = ({ children }) => {
       });
 
       if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
+        const result = await response.json();
+        if (result.success && result.user) {
+          setUser(result.user);
+        } else {
+          localStorage.removeItem('token');
+          setUser(null);
+        }
       } else {
         // Token is invalid, remove it
-        sessionStorage.removeItem('token');
+        localStorage.removeItem('token');
         setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      sessionStorage.removeItem('token');
+      localStorage.removeItem('token');
       setUser(null);
     } finally {
       setLoading(false);
@@ -81,8 +86,8 @@ const AuthProvider = ({ children }) => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        sessionStorage.setItem('token', data.token);
+      if (response.ok && data.success) {
+        localStorage.setItem('token', data.token);
         setUser(data.user);
         return { success: true, user: data.user };
       } else {
@@ -106,8 +111,8 @@ const AuthProvider = ({ children }) => {
 
       const data = await response.json();
 
-      if (response.ok) {
-        sessionStorage.setItem('token', data.token);
+      if (response.ok && data.success) {
+        localStorage.setItem('token', data.token);
         setUser(data.user);
         return { success: true, user: data.user };
       } else {
@@ -120,7 +125,7 @@ const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    sessionStorage.removeItem('token');
+    localStorage.removeItem('token');
     setUser(null);
   };
 
@@ -136,61 +141,17 @@ const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// API Helper Hook
-export const useAPI = () => {
-  const { user } = useAuth();
-
-  const makeRequest = async (endpoint, options = {}) => {
-    const token = sessionStorage.getItem('token');
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const defaultOptions = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-      }
-    };
-
-    const finalOptions = {
-      ...defaultOptions,
-      ...options,
-      headers: {
-        ...defaultOptions.headers,
-        ...options.headers
-      }
-    };
-
-    try {
-      const response = await fetch(url, finalOptions);
-      
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Token expired or invalid
-          sessionStorage.removeItem('token');
-          window.location.href = '/auth';
-          return null;
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('API Request failed:', error);
-      throw error;
-    }
-  };
-
-  return { makeRequest };
-};
-
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole = null }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg text-gray-600">Loading...</div>
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -204,6 +165,18 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   }
 
   return children;
+};
+
+// Dashboard Route Handler - redirects to appropriate dashboard
+const DashboardRoute = () => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/auth" />;
+  }
+
+  // Redirect to role-specific room instead of generic dashboard
+  return <Navigate to={user.role === "student" ? "/student" : "/company"} />;
 };
 
 // Main App Component
@@ -249,7 +222,18 @@ function App() {
 
 // App Content Component (separated to use auth context)
 const AppContent = ({ showRegister, setShowRegister, activeRole, setActiveRole, RoleSwitcher }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -258,8 +242,21 @@ const AppContent = ({ showRegister, setShowRegister, activeRole, setActiveRole, 
       <nav className="p-4 bg-white shadow flex justify-between items-center">
         <div className="flex space-x-4">
           <Link to="/" className="text-blue-600 hover:underline font-medium">Home</Link>
-          <Link to="/dashboard" className="text-blue-600 hover:underline font-medium">Dashboard</Link>
-          <Link to="/challenge" className="text-blue-600 hover:underline font-medium">Challenge</Link>
+          {user && (
+            <>
+              <Link 
+                to={user.role === 'student' ? '/student' : '/company'} 
+                className="text-blue-600 hover:underline font-medium"
+              >
+                {user.role === 'student' ? 'Challenges' : 'Manage'}
+              </Link>
+              {user.role === 'student' && (
+                <Link to="/submissions" className="text-blue-600 hover:underline font-medium">
+                  My Submissions
+                </Link>
+              )}
+            </>
+          )}
           {!user && <Link to="/auth" className="text-blue-600 hover:underline font-medium">Login</Link>}
         </div>
         
@@ -278,9 +275,9 @@ const AppContent = ({ showRegister, setShowRegister, activeRole, setActiveRole, 
         )}
       </nav>
 
-      <div className="flex-1 flex flex-col items-center p-4">
+      <div className="flex-1 flex flex-col">
         <Routes>
-          {/* Home Page */}
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           
           {/* Auth Page */}
@@ -288,39 +285,41 @@ const AppContent = ({ showRegister, setShowRegister, activeRole, setActiveRole, 
               user ? (
                 <Navigate to={user.role === "student" ? "/student" : "/company"} />
               ) : (
-                <div className="space-y-6 w-full max-w-4xl mt-6">
-                  <div className="text-center">
-                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                      {showRegister ? 'Create Account' : 'Welcome Back'}
-                    </h1>
-                    <p className="text-gray-600">
-                      {showRegister ? 'Join our platform today' : 'Sign in to your account'}
-                    </p>
-                  </div>
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <div className="space-y-6 w-full max-w-md">
+                    <div className="text-center">
+                      <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                        {showRegister ? 'Create Account' : 'Welcome Back'}
+                      </h1>
+                      <p className="text-gray-600">
+                        {showRegister ? 'Join our platform today' : 'Sign in to your account'}
+                      </p>
+                    </div>
 
-                  <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition mb-2 block mx-auto"
-                    onClick={() => setShowRegister((v) => !v)}
-                    aria-label={showRegister ? "Go to Login" : "Go to Register"}
-                  >
-                    {showRegister ? "Already have an account? Login" : "Need an account? Register"}
-                  </button>
+                    <button
+                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition mb-2 block mx-auto"
+                      onClick={() => setShowRegister((v) => !v)}
+                      aria-label={showRegister ? "Go to Login" : "Go to Register"}
+                    >
+                      {showRegister ? "Already have an account? Login" : "Need an account? Register"}
+                    </button>
 
-                  <RoleSwitcher currentRole={activeRole} onSwitch={setActiveRole} />
+                    <RoleSwitcher currentRole={activeRole} onSwitch={setActiveRole} />
 
-                  <div className="flex flex-col items-center md:flex-row md:space-x-4 space-y-4 md:space-y-0 mt-4">
-                    {showRegister ? (
-                      <RegisterForm role={activeRole} />
-                    ) : (
-                      <LoginForm role={activeRole} />
-                    )}
+                    <div className="mt-4">
+                      {showRegister ? (
+                        <RegisterForm role={activeRole} />
+                      ) : (
+                        <LoginForm role={activeRole} />
+                      )}
+                    </div>
                   </div>
                 </div>
               )
             }
           />
 
-          {/* Protected Routes */}
+          {/* Role-specific Main Routes */}
           <Route
             path="/student"
             element={
@@ -329,6 +328,7 @@ const AppContent = ({ showRegister, setShowRegister, activeRole, setActiveRole, 
               </ProtectedRoute>
             }
           />
+          
           <Route
             path="/company"
             element={
@@ -338,17 +338,9 @@ const AppContent = ({ showRegister, setShowRegister, activeRole, setActiveRole, 
             }
           />
 
-          {/* Other Protected Pages */}
+          {/* Challenge Routes */}
           <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/challenge"
+            path="/challenge/:id"
             element={
               <ProtectedRoute>
                 <ChallengePage />
@@ -356,7 +348,79 @@ const AppContent = ({ showRegister, setShowRegister, activeRole, setActiveRole, 
             }
           />
 
-          {/* Redirect root to appropriate page based on auth status */}
+          {/* Dashboard Route - redirects to role-specific rooms */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardRoute />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Additional Protected Routes */}
+          <Route
+            path="/submissions"
+            element={
+              <ProtectedRoute requiredRole="student">
+                <div className="p-6 text-center">
+                  <h1 className="text-2xl font-bold mb-4">My Submissions</h1>
+                  <p className="text-gray-600">Submissions page coming soon...</p>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <div className="p-6 text-center">
+                  <h1 className="text-2xl font-bold mb-4">Leaderboard</h1>
+                  <p className="text-gray-600">Leaderboard coming soon...</p>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <div className="p-6 text-center">
+                  <h1 className="text-2xl font-bold mb-4">Profile Settings</h1>
+                  <p className="text-gray-600">Profile page coming soon...</p>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Company-specific routes */}
+          <Route
+            path="/create-challenge"
+            element={
+              <ProtectedRoute requiredRole="company">
+                <div className="p-6 text-center">
+                  <h1 className="text-2xl font-bold mb-4">Create New Challenge</h1>
+                  <p className="text-gray-600">Challenge creation page coming soon...</p>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/submissions-review"
+            element={
+              <ProtectedRoute requiredRole="company">
+                <div className="p-6 text-center">
+                  <h1 className="text-2xl font-bold mb-4">Review Submissions</h1>
+                  <p className="text-gray-600">Submission review page coming soon...</p>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch-all redirect */}
           <Route path="*" element={
             user ? 
               <Navigate to={user.role === "student" ? "/student" : "/company"} /> : 
