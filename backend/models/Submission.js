@@ -12,10 +12,11 @@ const submissionSchema = new mongoose.Schema({
     ref: 'Challenge',
     required: true
   },
-  code: {
+  repoLink: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    match: [/^https:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+$/, "Invalid GitHub repository URL"]
   },
   status: {
     type: String,
@@ -49,13 +50,10 @@ const submissionSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Indexes for efficient queries
-submissionSchema.index({ user: 1, challenge: 1 });
+// Indexes
+submissionSchema.index({ user: 1, challenge: 1 }, { unique: true });
 submissionSchema.index({ challenge: 1 });
 submissionSchema.index({ status: 1 });
 submissionSchema.index({ submittedAt: -1 });
-
-// Compound index to ensure one submission per user per challenge
-submissionSchema.index({ user: 1, challenge: 1 }, { unique: true });
 
 module.exports = mongoose.model('Submission', submissionSchema);

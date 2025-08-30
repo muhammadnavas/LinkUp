@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../App';
+import { useAuth } from '../contexts/AuthContext';
 
 const RegisterForm = ({ role }) => {
   const { register } = useAuth();

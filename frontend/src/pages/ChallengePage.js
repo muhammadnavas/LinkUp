@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getChallenge, submitSolution } from "../api";
-import { useAuth } from "../App";
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ChallengePage() {
   const navigate = useNavigate();
