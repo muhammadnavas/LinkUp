@@ -1,3 +1,4 @@
+// src/pages/ChallengePage.js
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getChallenge, submitSolution } from "../api";
@@ -113,10 +114,15 @@ export default function ChallengePage() {
     setSubmitError("");
     
     try {
-      const res = await submitSolution(id, { solution });
+      // Use new API signature
+      const res = await submitSolution({
+        challengeId: id,
+        solution,
+        // Add other fields if needed (repoLink, codeSubmission, etc.)
+      });
       
       if (res.success) {
-        alert("✅ Solution submitted successfully! You will receive feedback within 24-48 hours.");
+        alert("705 Solution submitted successfully! You will receive feedback within 24-48 hours.");
         navigate(user?.role === 'student' ? '/student' : '/company');
       } else {
         setSubmitError(res.error || "Failed to submit solution.");
@@ -214,73 +220,140 @@ export default function ChallengePage() {
               <div className="text-gray-700 whitespace-pre-wrap">{challenge.description}</div>
             </div>
 
+            {challenge.requirements && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-2">Requirements</h3>
+                <div className="text-gray-700 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
+                  {challenge.requirements}
+                </div>
+              </div>
+            )}
+
             {challenge.examples && challenge.examples.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-lg font-semibold mb-2">Examples</h3>
                 {challenge.examples.map((example, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg mb-2">
-                    <div className="mb-2">
-                      <strong>Input:</strong> <code className="bg-gray-200 px-2 py-1 rounded">{example.input}</code>
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                      <div>
+                        <strong className="text-sm text-gray-600">Input:</strong>
+                        <pre className="bg-white p-2 rounded border mt-1 text-sm overflow-x-auto">
+                          {example.input}
+                        </pre>
+                      </div>
+                      <div>
+                        <strong className="text-sm text-gray-600">Output:</strong>
+                        <pre className="bg-white p-2 rounded border mt-1 text-sm overflow-x-auto">
+                          {example.output}
+                        </pre>
+                      </div>
                     </div>
-                    <div>
-                      <strong>Output:</strong> <code className="bg-gray-200 px-2 py-1 rounded">{example.output}</code>
-                    </div>
+                    {example.explanation && (
+                      <div className="mt-2">
+                        <strong className="text-sm text-gray-600">Explanation:</strong>
+                        <p className="text-sm text-gray-700 mt-1">{example.explanation}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
 
             {challenge.tags && challenge.tags.length > 0 && (
-              <div className="mt-4">
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-2">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {challenge.tags.map((tag, index) => (
-                    <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
+                    <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
                       {tag}
                     </span>
                   ))}
                 </div>
               </div>
             )}
+
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-sm text-blue-800 font-medium">Submission Format: {challenge.submissionFormat}</p>
+                  <p className="text-sm text-blue-700 mt-1">
+                    {challenge.submissionFormat === 'github' && 'Please provide a GitHub repository link with your solution.'}
+                    {challenge.submissionFormat === 'code' && 'Please paste your complete code solution below.'}
+                    {challenge.submissionFormat === 'text' && 'Please provide a detailed text description of your solution.'}
+                    {challenge.submissionFormat === 'file' && 'Please upload your solution files.'}
+                  </p>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Maximum submissions allowed: {challenge.maxSubmissions}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Solution Editor */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Solution</h2>
-          
-          {submitError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm">{submitError}</p>
-            </div>
-          )}
+        {/* Solution Editor: Only show for students */}
+        {user?.role === 'student' && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Solution</h2>
+            
+            {submitError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{submitError}</p>
+              </div>
+            )}
 
-          <textarea
-            value={solution}
-            onChange={(e) => setSolution(e.target.value)}
-            placeholder="Write your complete solution here..."
-            className="w-full h-96 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm resize-none"
-            disabled={timeRemaining === "Expired"}
-          />
-          
-          <div className="flex justify-between items-center mt-6">
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">Tip:</span> Make sure to test your solution thoroughly before submitting.
-            </p>
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting || timeRemaining === "Expired" || !solution.trim()}
-              className={`px-6 py-3 rounded-lg font-semibold transition ${
-                isSubmitting || timeRemaining === "Expired" || !solution.trim()
-                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              {isSubmitting ? "Submitting..." : 
-               timeRemaining === "Expired" ? "Challenge Expired" : 
-               "Submit Solution"}
-            </button>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {challenge?.submissionFormat === 'github' && 'GitHub Repository URL'}
+                {challenge?.submissionFormat === 'code' && 'Code Solution'}
+                {challenge?.submissionFormat === 'text' && 'Solution Description'}
+                {challenge?.submissionFormat === 'file' && 'Solution Details'}
+              </label>
+              <textarea
+                value={solution}
+                onChange={(e) => setSolution(e.target.value)}
+                placeholder={
+                  challenge?.submissionFormat === 'github' ? 'https://github.com/username/repository-name' :
+                  challenge?.submissionFormat === 'code' ? 'Paste your complete code solution here...' :
+                  challenge?.submissionFormat === 'text' ? 'Describe your solution approach and implementation...' :
+                  'Provide details about your solution files and implementation...'
+                }
+                className="w-full h-96 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm resize-none"
+                disabled={timeRemaining === "Expired"}
+              />
+            </div>
+            
+            <div className="flex justify-between items-center mt-6">
+              <div className="text-sm text-gray-600">
+                <p className="font-medium mb-1">💡 Submission Tips:</p>
+                <ul className="space-y-1">
+                  <li>• Test your solution thoroughly before submitting</li>
+                  <li>• Make sure your code is well-commented and readable</li>
+                  <li>• Include a README if submitting via GitHub</li>
+                  {challenge?.submissionFormat === 'github' && (
+                    <li>• Ensure your repository is public or accessible</li>
+                  )}
+                </ul>
+              </div>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting || timeRemaining === "Expired" || !solution.trim()}
+                className={`px-6 py-3 rounded-lg font-semibold transition ${
+                  isSubmitting || timeRemaining === "Expired" || !solution.trim()
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                {isSubmitting ? "Submitting..." : 
+                 timeRemaining === "Expired" ? "Challenge Expired" : 
+                 "Submit Solution"}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

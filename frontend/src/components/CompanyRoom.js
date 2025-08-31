@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getChallenges, getChallengeSubmissions } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function CompanyRoom() {
@@ -27,54 +28,38 @@ export default function CompanyRoom() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       // Fetch company's challenges
-      const challengesRes = await fetch('http://localhost:5000/api/challenges', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      // Fetch company dashboard stats
-      const statsRes = await fetch('http://localhost:5000/api/dashboard/company-stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      // Fetch submissions for company's challenges
-      const submissionsRes = await fetch('http://localhost:5000/api/submissions/company', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (challengesRes.ok && statsRes.ok) {
-        const challengesData = await challengesRes.json();
-        const statsData = await statsRes.json();
-        
-        if (challengesData.success) {
-          // Filter challenges created by this company
-          const companyChallenges = challengesData.data.filter(c => c.createdBy === user._id);
+      const challengesRes = await getChallenges();
+      let companyChallenges = [];
+        if (challengesRes.success) {
+          // Filter challenges created by this company (compare as strings)
+          companyChallenges = challengesRes.data.filter(c => c.companyId && String(c.companyId._id) === String(user.id));
+          console.log('User ID:', user.id);
+          console.log('Filtered challenges:', companyChallenges);
           setChallenges(companyChallenges);
         }
-        
-        if (statsData.success) {
-          setStats(statsData.data);
-        }
 
-        if (submissionsRes.ok) {
-          const submissionsData = await submissionsRes.json();
-          if (submissionsData.success) {
-            setSubmissions(submissionsData.data);
-          }
+      // Fetch submissions for each challenge
+      let allSubmissions = [];
+      for (const challenge of companyChallenges) {
+        const submissionsRes = await getChallengeSubmissions(challenge._id);
+        if (submissionsRes.success) {
+          // Only include submissions not made by the company itself
+          const studentSubmissions = submissionsRes.data.filter(s => s.user && s.user.role === 'student');
+          allSubmissions = allSubmissions.concat(studentSubmissions);
         }
-      } else {
-        setError('Failed to load data');
       }
+      setSubmissions(allSubmissions);
+
+      // Stats placeholder (implement as needed)
+      setStats({
+        totalChallenges: companyChallenges.length,
+        totalSubmissions: allSubmissions.length,
+        pendingReviews: allSubmissions.filter(s => s.status === 'pending').length,
+        completedReviews: allSubmissions.filter(s => s.status === 'approved' || s.status === 'rejected').length,
+        recentActivity: allSubmissions.slice(0, 5)
+      });
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load data. Please try again.');

@@ -1,124 +1,257 @@
-const express = require("express");
-const Challenge = require("../models/Challenge");
-const Submission = require("../models/Submission");
-const { authMiddleware } = require("../middleware/authMiddleware");
-const { validateSubmission, handleValidationErrors } = require("../utils/validators");
-
+// routes/challenges.js
+const express = require('express');
 const router = express.Router();
+const Challenge = require('../models/Challenge');
+const Submission = require('../models/Submission');
+const { authMiddleware } = require('../middleware/authMiddleware');
 
-// Get all challenges
-router.get("/", authMiddleware, async (req, res) => {
+// GET /api/challenges - Get all active challenges
+router.get('/', async (req, res) => {
   try {
-    const challenges = await Challenge.find({ isActive: true })
-      .select('title company description difficulty points deadline timeLimit tags')
-      .sort({ createdAt: -1 });
+    const { difficulty, company, page = 1, limit = 10 } = req.query;
     
-    res.json({ success: true, data: challenges });
+    const filter = { isActive: true };
+    
+    if (difficulty) filter.difficulty = difficulty;
+    if (company) filter.company = new RegExp(company, 'i');
+    
+    const challenges = await Challenge.find(filter)
+      .populate('companyId', 'username email')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec();
+
+    const total = await Challenge.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: challenges,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalChallenges: total
+      }
+    });
   } catch (error) {
-    console.error("Error fetching challenges:", error);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error('Error fetching challenges:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch challenges'
+    });
   }
 });
 
-// Get specific challenge by ID
-router.get("/:id", authMiddleware, async (req, res) => {
+// GET /api/challenges/:id - Get specific challenge
+router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    const challenge = await Challenge.findById(id)
-      .populate('createdBy', 'name email');
+    const challenge = await Challenge.findById(req.params.id)
+      .populate('companyId', 'username email');
     
     if (!challenge) {
-      return res.status(404).json({ success: false, error: "Challenge not found" });
+      return res.status(404).json({
+        success: false,
+        error: 'Challenge not found'
+      });
     }
 
-    if (!challenge.isActive) {
-      return res.status(403).json({ success: false, error: "Challenge is no longer active" });
-    }
-
-    res.json({ success: true, data: challenge });
+    res.json({
+      success: true,
+      data: challenge
+    });
   } catch (error) {
-    console.error("Error fetching challenge:", error);
-    if (error.name === 'CastError') {
-      return res.status(400).json({ success: false, error: "Invalid challenge ID format" });
-    }
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error('Error fetching challenge:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch challenge'
+    });
   }
 });
 
-// Submit solution to a challenge
-router.post(
-  "/:challengeId/submit",
-  authMiddleware,
-  validateSubmission,
-  handleValidationErrors,
-  async (req, res) => {
-    try {
-      const { challengeId } = req.params;
-      const { solution } = req.body; // Changed from 'code' to 'solution' to match frontend
-
-      const challenge = await Challenge.findById(challengeId);
-      if (!challenge) {
-        return res.status(404).json({ success: false, error: "Challenge not found" });
-      }
-
-      if (!challenge.isActive) {
-        return res.status(403).json({ success: false, error: "Challenge is no longer active" });
-      }
-
-      // Check if deadline has passed
-      if (new Date() > new Date(challenge.deadline)) {
-        return res.status(403).json({ success: false, error: "Challenge deadline has passed" });
-      }
-
-      // Check if user has already submitted for this challenge
-      const existingSubmission = await Submission.findOne({
-        user: req.user._id,
-        challenge: challengeId
-      });
-
-      if (existingSubmission) {
-        return res.status(409).json({ 
-          success: false, 
-          error: "You have already submitted a solution for this challenge" 
-        });
-      }
-
-      const submission = new Submission({
-        user: req.user._id,
-        challenge: challengeId,
-        code: solution, // Store solution in code field
-        submittedAt: new Date(),
-        status: 'pending'
-      });
-
-      await submission.save();
-      res.json({ success: true, data: submission });
-    } catch (error) {
-      console.error("Error submitting solution:", error);
-      if (error.name === 'CastError') {
-        return res.status(400).json({ success: false, error: "Invalid challenge ID format" });
-      }
-      res.status(500).json({ success: false, error: "Server error" });
-    }
-  }
-);
-
-// Get user's submissions for a specific challenge
-router.get("/:challengeId/submissions", authMiddleware, async (req, res) => {
+// POST /api/challenges - Create new challenge (company only)
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { challengeId } = req.params;
+    const { user } = req;
     
-    const submissions = await Submission.find({
-      user: req.user._id,
-      challenge: challengeId
-    }).populate('challenge', 'title company');
+    if (user.role !== 'company') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only companies can create challenges'
+      });
+    }
 
-    res.json({ success: true, data: submissions });
+    const {
+      title,
+      description,
+      difficulty,
+      points,
+      tags,
+      examples,
+      deadline,
+      requirements,
+      submissionFormat,
+      maxSubmissions
+    } = req.body;
+
+    // Validation
+    if (!title || !description || !difficulty || !points || !deadline) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    // Check if deadline is in the future
+    if (new Date(deadline) <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Deadline must be in the future'
+      });
+    }
+
+    const challenge = new Challenge({
+      title,
+      description,
+      company: user.companyName,
+      companyId: user._id,
+      difficulty,
+      points,
+      tags: tags || [],
+      examples: examples || [],
+      deadline,
+      requirements,
+      submissionFormat: submissionFormat || 'github',
+      maxSubmissions: maxSubmissions || 1
+    });
+
+    await challenge.save();
+
+    res.status(201).json({
+      success: true,
+      data: challenge,
+      message: 'Challenge created successfully'
+    });
   } catch (error) {
-    console.error("Error fetching submissions:", error);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error('Error creating challenge:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create challenge'
+    });
+  }
+});
+
+// PUT /api/challenges/:id - Update challenge (company only)
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { user } = req;
+    const challenge = await Challenge.findById(req.params.id);
+
+    if (!challenge) {
+      return res.status(404).json({
+        success: false,
+        error: 'Challenge not found'
+      });
+    }
+
+    if (challenge.companyId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'You can only update your own challenges'
+      });
+    }
+
+    const updatedChallenge = await Challenge.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      data: updatedChallenge,
+      message: 'Challenge updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating challenge:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update challenge'
+    });
+  }
+});
+
+// DELETE /api/challenges/:id - Delete challenge (company only)
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { user } = req;
+    const challenge = await Challenge.findById(req.params.id);
+
+    if (!challenge) {
+      return res.status(404).json({
+        success: false,
+        error: 'Challenge not found'
+      });
+    }
+
+    if (challenge.companyId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'You can only delete your own challenges'
+      });
+    }
+
+    await Challenge.findByIdAndUpdate(req.params.id, { isActive: false });
+
+    res.json({
+      success: true,
+      message: 'Challenge deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting challenge:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete challenge'
+    });
+  }
+});
+
+// GET /api/challenges/:id/submissions - Get submissions for a challenge
+router.get('/:id/submissions', authMiddleware, async (req, res) => {
+  try {
+    const { user } = req;
+    const challenge = await Challenge.findById(req.params.id);
+
+    if (!challenge) {
+      return res.status(404).json({
+        success: false,
+        error: 'Challenge not found'
+      });
+    }
+
+    // Only challenge creator can view all submissions
+    if (challenge.companyId.toString() !== user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
+
+    const submissions = await Submission.find({ challenge: req.params.id })
+      .populate('user', 'username email role')
+      .sort({ submittedAt: -1 });
+
+    res.json({
+      success: true,
+      data: submissions
+    });
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch submissions'
+    });
   }
 });
 
 module.exports = router;
+

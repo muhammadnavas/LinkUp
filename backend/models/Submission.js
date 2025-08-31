@@ -1,4 +1,4 @@
-// models/Submission.js
+// models/Submission.js (Updated)
 const mongoose = require('mongoose');
 
 const submissionSchema = new mongoose.Schema({
@@ -12,15 +12,28 @@ const submissionSchema = new mongoose.Schema({
     ref: 'Challenge',
     required: true
   },
-  repoLink: {
+  solution: {
     type: String,
     required: true,
+    maxLength: 10000
+  },
+  repoLink: {
+    type: String,
     trim: true,
     match: [/^https:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+$/, "Invalid GitHub repository URL"]
   },
+  codeSubmission: {
+    type: String,
+    maxLength: 20000
+  },
+  fileAttachments: [{
+    name: String,
+    url: String,
+    size: Number
+  }],
   status: {
     type: String,
-    enum: ['pending', 'reviewing', 'accepted', 'rejected'],
+    enum: ['pending', 'reviewing', 'approved', 'rejected'],
     default: 'pending'
   },
   score: {

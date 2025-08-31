@@ -1,9 +1,9 @@
 // src/pages/SubmissionsPage.js
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, User, Trophy, Clock, FileText, ExternalLink } from 'lucide-react';
-import { getSubmissions, getChallenge } from '../api';
+import { Calendar, Clock, ExternalLink, FileText, Trophy, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { getChallenge, getChallengeSubmissions, getUserSubmissions } from '../api';
 
 const SubmissionsPage = () => {
   const { challengeId } = useParams();
@@ -20,9 +20,15 @@ const SubmissionsPage = () => {
 
   const fetchSubmissions = async () => {
     try {
-      // ✅ use helper function
-      const data = await getSubmissions(challengeId);
-      setSubmissions(data);
+      // Use correct API function based on context
+      let data;
+      if (challengeId) {
+        data = await getChallengeSubmissions(challengeId);
+        setSubmissions(data.data || []);
+      } else {
+        data = await getUserSubmissions();
+        setSubmissions(data.data || []);
+      }
     } catch (error) {
       setError('Failed to fetch submissions');
     } finally {

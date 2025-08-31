@@ -1,19 +1,18 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // Components
-import ProtectedRoute from './ProtectedRoute';
-import RoleSwitcher from './RoleSwitcher';
-import LoginForm from './LoginForm';
-import RegisterForm from './RegisterForm';
-import StudentRoom from './StudentRoom';
 import CompanyRoom from './CompanyRoom';
+import LoginForm from './LoginForm';
+import ProtectedRoute from './ProtectedRoute';
+import RegisterForm from './RegisterForm';
+import RoleSwitcher from './RoleSwitcher';
+import StudentRoom from './StudentRoom';
 
 // Pages
-import Home from '../pages/Home';
-import Dashboard from '../pages/Dashboard';
 import ChallengePage from '../pages/ChallengePage';
+import CreateChallengePage from '../pages/CreateChallengePage';
+import Home from '../pages/Home';
 import SubmissionsPage from '../pages/SubmissionsPage';
 
 // Dashboard Route Handler - redirects to appropriate dashboard
@@ -184,18 +183,7 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
         path="/create-challenge"
         element={
           <ProtectedRoute requiredRole="company">
-            <div className="container mx-auto px-6 py-8">
-              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-                <h1 className="text-3xl font-bold text-gray-800 mb-4">Create New Challenge</h1>
-                <p className="text-gray-600 mb-4">Design coding challenges to discover talented developers.</p>
-                <div className="text-green-600">
-                  <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <p className="text-gray-500">Challenge creation feature coming soon...</p>
-              </div>
-            </div>
+            <CreateChallengePage />
           </ProtectedRoute>
         }
       />

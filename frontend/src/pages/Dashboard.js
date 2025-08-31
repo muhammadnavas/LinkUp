@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChallenges, getSubmissions } from '../api';
+import { getChallenges, getUserSubmissions } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Dashboard() {
@@ -38,38 +38,22 @@ export default function Dashboard() {
         
         if (user.role === 'student') {
           // For students, get their submissions
-          const submissionsRes = await getSubmissions();
-          
-          const completedSubmissions = submissionsRes.data.filter(s => 
-            s.status === 'accepted' || s.status === 'rejected'
-          );
-          
-          const pendingSubmissions = submissionsRes.data.filter(s => 
-            s.status === 'pending' || s.status === 'reviewing'
-          );
-
-          const scoresArray = submissionsRes.data
-            .filter(s => s.score !== null && s.score !== undefined)
-            .map(s => s.score);
-
-          const avgScore = scoresArray.length > 0 
-            ? Math.round(scoresArray.reduce((acc, score) => acc + score, 0) / scoresArray.length)
-            : 0;
-
-          // Create recent activity from submissions
-          const recentActivity = submissionsRes.data
-            .slice(0, 5)
-            .map(submission => ({
-              id: submission._id,
-              type: 'submission',
-              title: `Submitted solution for challenge`,
-              challengeTitle: submission.challenge?.title || 'Unknown Challenge',
-              company: submission.challenge?.company || '',
-              date: new Date(submission.submittedAt).toLocaleDateString(),
-              score: submission.score,
-              status: submission.status
-            }));
-
+          const submissionsRes = await getUserSubmissions();
+          const submissions = submissionsRes.data || [];
+          const completedSubmissions = submissions.filter(s => s.status === 'approved' || s.status === 'rejected');
+          const pendingSubmissions = submissions.filter(s => s.status === 'pending' || s.status === 'reviewing');
+          const scoresArray = submissions.filter(s => s.score !== null && s.score !== undefined).map(s => s.score);
+          const avgScore = scoresArray.length > 0 ? Math.round(scoresArray.reduce((acc, score) => acc + score, 0) / scoresArray.length) : 0;
+          const recentActivity = submissions.slice(0, 5).map(submission => ({
+            id: submission._id,
+            type: 'submission',
+            title: `Submitted solution for challenge`,
+            challengeTitle: submission.challenge?.title || 'Unknown Challenge',
+            company: submission.challenge?.company || '',
+            date: new Date(submission.submittedAt).toLocaleDateString(),
+            score: submission.score,
+            status: submission.status
+          }));
           setStats({
             totalChallenges: challengesRes.data.length,
             completedChallenges: completedSubmissions.length,

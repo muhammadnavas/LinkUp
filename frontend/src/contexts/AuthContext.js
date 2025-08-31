@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 // API Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('Auth verify response:', result);
         if (result.success && result.user) {
           setUser(result.user);
         } else {
