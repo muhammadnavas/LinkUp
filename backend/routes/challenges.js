@@ -216,11 +216,14 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // GET /api/challenges/:id/submissions - Get submissions for a challenge
+// GET /api/challenges/:id/submissions - Get submissions for a challenge (company only)
 router.get('/:id/submissions', authMiddleware, async (req, res) => {
   try {
     const { user } = req;
-    const challenge = await Challenge.findById(req.params.id);
+    const challengeId = req.params.id;
 
+    // Get challenge details first
+    const challenge = await Challenge.findById(challengeId);
     if (!challenge) {
       return res.status(404).json({
         success: false,
@@ -228,27 +231,42 @@ router.get('/:id/submissions', authMiddleware, async (req, res) => {
       });
     }
 
-    // Only challenge creator can view all submissions
-    if (challenge.companyId.toString() !== user._id.toString()) {
+    // Check if user owns the challenge or is admin
+    const canView = (
+      challenge.companyId?.toString() === user._id.toString() ||
+      user.role === 'admin'
+    );
+
+    if (!canView) {
       return res.status(403).json({
         success: false,
-        error: 'Access denied'
+        error: 'You can only view submissions for your own challenges'
       });
     }
 
-    const submissions = await Submission.find({ challenge: req.params.id })
+    // Get submissions for this challenge
+    const submissions = await Submission.find({ challenge: challengeId })
       .populate('user', 'username email role')
+      .populate('reviewedBy', 'username')
       .sort({ submittedAt: -1 });
 
     res.json({
       success: true,
-      data: submissions
+      data: submissions,
+      challenge: {
+        _id: challenge._id,
+        title: challenge.title,
+        company: challenge.company,
+        difficulty: challenge.difficulty,
+        points: challenge.points,
+        deadline: challenge.deadline
+      }
     });
   } catch (error) {
-    console.error('Error fetching submissions:', error);
+    console.error('Error fetching challenge submissions:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch submissions'
+      error: 'Failed to fetch challenge submissions'
     });
   }
 });

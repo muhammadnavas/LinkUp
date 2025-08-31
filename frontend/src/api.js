@@ -1,4 +1,3 @@
-
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Auth headers
@@ -99,5 +98,30 @@ export const register = async (userData) => {
 
 export const verifyToken = async () => {
   const res = await fetch(`${API_BASE_URL}/auth/verify`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
+
+// Get current user's profile
+export const getUserProfile = async () => {
+  const res = await fetch(`${API_BASE_URL}/users/profile`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
+
+// Update current user's profile
+export const updateUserProfile = async (profileData) => {
+  const res = await fetch(`${API_BASE_URL}/users/profile`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(profileData)
+  });
+  return handleResponse(res);
+};
+
+// Get leaderboard (optionally by timeframe)
+export const getLeaderboard = async (timeframe = 'all') => {
+  const url = timeframe && timeframe !== 'all'
+    ? `${API_BASE_URL}/leaderboard?timeframe=${encodeURIComponent(timeframe)}`
+    : `${API_BASE_URL}/leaderboard`;
+  const res = await fetch(url, { headers: getAuthHeaders() });
   return handleResponse(res);
 };

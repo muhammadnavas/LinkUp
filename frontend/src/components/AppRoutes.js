@@ -14,6 +14,9 @@ import ChallengePage from '../pages/ChallengePage';
 import CreateChallengePage from '../pages/CreateChallengePage';
 import Home from '../pages/Home';
 import SubmissionsPage from '../pages/SubmissionsPage';
+import SubmissionsReviewPage from '../pages/SubmissionsReviewPage';
+import LeaderboardPage from '../pages/LeaderboardPage';
+import ProfilePage from '../pages/ProfilePage';
 
 // Dashboard Route Handler - redirects to appropriate dashboard
 const DashboardRoute = () => {
@@ -142,18 +145,7 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
         path="/leaderboard"
         element={
           <ProtectedRoute>
-            <div className="container mx-auto px-6 py-8">
-              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-                <h1 className="text-3xl font-bold text-gray-800 mb-4">Leaderboard</h1>
-                <p className="text-gray-600 mb-4">See how you rank among other talented developers.</p>
-                <div className="text-yellow-600">
-                  <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500">Leaderboard feature coming soon...</p>
-              </div>
-            </div>
+            <LeaderboardPage />
           </ProtectedRoute>
         }
       />
@@ -162,21 +154,11 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
         path="/profile"
         element={
           <ProtectedRoute>
-            <div className="container mx-auto px-6 py-8">
-              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-                <h1 className="text-3xl font-bold text-gray-800 mb-4">Profile Settings</h1>
-                <p className="text-gray-600 mb-4">Manage your account information and preferences.</p>
-                <div className="text-gray-600">
-                  <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500">Profile management feature coming soon...</p>
-              </div>
-            </div>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />
+
 
       {/* Company-specific routes */}
       <Route
@@ -189,21 +171,19 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
       />
 
       <Route
-        path="/submissions-review"
+        path="/challenges/:challengeId/submissions"
         element={
           <ProtectedRoute requiredRole="company">
-            <div className="container mx-auto px-6 py-8">
-              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-                <h1 className="text-3xl font-bold text-gray-800 mb-4">Review Submissions</h1>
-                <p className="text-gray-600 mb-4">Evaluate and score student submissions for your challenges.</p>
-                <div className="text-purple-600">
-                  <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
-                <p className="text-gray-500">Submission review feature coming soon...</p>
-              </div>
-            </div>
+            <SubmissionsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/submissions/:submissionId/review"
+        element={
+          <ProtectedRoute requiredRole="company">
+            <SubmissionsReviewPage />
           </ProtectedRoute>
         }
       />

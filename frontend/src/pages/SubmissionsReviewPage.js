@@ -1,18 +1,416 @@
-// File: src/pages/SubmissionsReviewPage.js
-import React from 'react';
+// src/pages/SubmissionsReviewPage.js - Complete implementation
+import { motion } from 'framer-motion';
+import { ArrowLeft, Calendar, CheckCircle, Clock, ExternalLink, FileText, Save, Star, User, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { getSubmission, reviewSubmission } from '../api';
 
 const SubmissionsReviewPage = () => {
-  return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">Review Submissions</h1>
-        <p className="text-gray-600 mb-4">Evaluate and score student submissions for your challenges.</p>
-        <div className="text-purple-600">
-          <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-          </svg>
+  const { submissionId } = useParams();
+  const navigate = useNavigate();
+  const [submission, setSubmission] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewData, setReviewData] = useState({
+    status: '',
+    score: '',
+    feedback: ''
+  });
+
+  useEffect(() => {
+    fetchSubmission();
+  }, [submissionId]);
+
+  const fetchSubmission = async () => {
+    try {
+      setLoading(true);
+      const response = await getSubmission(submissionId);
+      const submissionData = response.data || response;
+      setSubmission(submissionData);
+      
+      // Pre-fill existing review data if any
+      if (submissionData.status !== 'pending') {
+        setReviewData({
+          status: submissionData.status,
+          score: submissionData.score || '',
+          feedback: submissionData.feedback || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching submission:', error);
+      setError('Failed to fetch submission details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!reviewData.status) {
+      setError('Please select a review status');
+      return;
+    }
+
+    if (reviewData.status === 'approved' && (!reviewData.score || reviewData.score < 0 || reviewData.score > 100)) {
+      setError('Please provide a valid score (0-100) for approved submissions');
+      return;
+    }
+
+    try {
+      setReviewing(true);
+      setError('');
+
+      const reviewPayload = {
+        status: reviewData.status,
+        feedback: reviewData.feedback,
+        ...(reviewData.status === 'approved' && { score: parseInt(reviewData.score) })
+      };
+
+      const response = await reviewSubmission(submissionId, reviewPayload);
+      const updatedSubmission = response.data || response;
+      
+      setSubmission(updatedSubmission);
+      
+      // Navigate back to submissions list or show success message
+      setTimeout(() => {
+        navigate(`/challenges/${submission.challenge._id}/submissions`);
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Error reviewing submission:', error);
+      setError('Failed to submit review: ' + error.message);
+    } finally {
+      setReviewing(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'text-green-600 bg-green-100';
+      case 'rejected': return 'text-red-600 bg-red-100';
+      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'reviewing': return 'text-blue-600 bg-blue-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!submission) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Submission Not Found</h2>
+          <p className="text-gray-600 mb-4">The submission you're looking for doesn't exist or you don't have permission to view it.</p>
+          <Link
+            to="/challenges"
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Challenges
+          </Link>
         </div>
-        <p className="text-gray-500">Submission review feature coming soon...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-lg p-6 mb-8"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Link
+                to={`/challenges/${submission.challenge._id}/submissions`}
+                className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Review Submission</h1>
+                <p className="text-gray-600 mt-1">
+                  Challenge: {submission.challenge.title}
+                </p>
+              </div>
+            </div>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${getStatusColor(
+                submission.status
+              )}`}
+            >
+              {submission.status}
+            </span>
+          </div>
+        </motion.div>
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6"
+          >
+            {error}
+          </motion.div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Submission Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Student Info */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-xl shadow-lg p-6"
+            >
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <User className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {submission.user?.username || 'Anonymous'}
+                  </h3>
+                  <div className="flex items-center text-gray-500 text-sm">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    Submitted on {formatDate(submission.submittedAt)}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Solution */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-xl shadow-lg p-6"
+            >
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Solution</h3>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {submission.solution}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Repository Link */}
+            {submission.repoLink && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-xl shadow-lg p-6"
+              >
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Repository</h3>
+                <a
+                  href={submission.repoLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  {submission.repoLink}
+                </a>
+              </motion.div>
+            )}
+
+            {/* Code Submission */}
+            {submission.codeSubmission && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-xl shadow-lg p-6"
+              >
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Code</h3>
+                <div className="bg-gray-900 rounded-lg p-4">
+                  <pre className="text-green-400 text-sm overflow-x-auto">
+                    <code>{submission.codeSubmission}</code>
+                  </pre>
+                </div>
+              </motion.div>
+            )}
+
+            {/* File Attachments */}
+            {submission.fileAttachments && submission.fileAttachments.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white rounded-xl shadow-lg p-6"
+              >
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Attachments</h3>
+                <div className="flex flex-wrap gap-2">
+                  {submission.fileAttachments.map((file, idx) => (
+                    <a
+                      key={idx}
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      {file.name}
+                    </a>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Review Panel */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-xl shadow-lg p-6 sticky top-8"
+            >
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Review Submission</h3>
+              
+              <form onSubmit={handleReviewSubmit}>
+                {/* Status Selection */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Review Status *
+                  </label>
+                  <div className="space-y-2">
+                    {[
+                      { value: 'reviewing', label: 'Under Review', icon: Clock, color: 'blue' },
+                      { value: 'approved', label: 'Approved', icon: CheckCircle, color: 'green' },
+                      { value: 'rejected', label: 'Rejected', icon: XCircle, color: 'red' }
+                    ].map((option) => (
+                      <label
+                        key={option.value}
+                        className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                          reviewData.status === option.value
+                            ? `border-${option.color}-500 bg-${option.color}-50`
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="status"
+                          value={option.value}
+                          checked={reviewData.status === option.value}
+                          onChange={(e) => setReviewData({ ...reviewData, status: e.target.value })}
+                          className="sr-only"
+                        />
+                        <option.icon className={`w-5 h-5 mr-3 ${
+                          reviewData.status === option.value ? `text-${option.color}-600` : 'text-gray-400'
+                        }`} />
+                        <span className={`font-medium ${
+                          reviewData.status === option.value ? `text-${option.color}-900` : 'text-gray-700'
+                        }`}>
+                          {option.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Score Input (only for approved) */}
+                {reviewData.status === 'approved' && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Score (0-100) *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={reviewData.score}
+                        onChange={(e) => setReviewData({ ...reviewData, score: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="Enter score..."
+                        required
+                      />
+                      <Star className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Feedback */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Feedback {reviewData.status === 'rejected' ? '*' : '(Optional)'}
+                  </label>
+                  <textarea
+                    value={reviewData.feedback}
+                    onChange={(e) => setReviewData({ ...reviewData, feedback: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    placeholder="Provide feedback to the student..."
+                    required={reviewData.status === 'rejected'}
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={reviewing || !reviewData.status}
+                  className="w-full flex items-center justify-center px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {reviewing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Submitting Review...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Submit Review
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {/* Previous Review Info */}
+              {submission.reviewedAt && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h4 className="font-medium text-gray-900 mb-2">Previous Review</h4>
+                  <div className="text-sm text-gray-600">
+                    <div className="flex items-center mb-1">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {formatDate(submission.reviewedAt)}
+                    </div>
+                    {submission.reviewedBy && (
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-1" />
+                        {submission.reviewedBy.username}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   );

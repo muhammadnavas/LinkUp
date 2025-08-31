@@ -1,4 +1,4 @@
-// routes/submissions.js
+// routes/submissions.js - Corrected version
 const express = require('express');
 const router = express.Router();
 const Submission = require('../models/Submission');
@@ -94,6 +94,7 @@ router.get('/', authMiddleware, async (req, res) => {
     
     const submissions = await Submission.find({ user: user._id })
       .populate('challenge', 'title company difficulty points deadline')
+      .populate('reviewedBy', 'username')
       .sort({ submittedAt: -1 });
 
     res.json({
@@ -116,7 +117,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     
     const submission = await Submission.findById(req.params.id)
       .populate('user', 'username email')
-      .populate('challenge', 'title company difficulty points deadline')
+      .populate('challenge', 'title company difficulty points deadline companyId')
       .populate('reviewedBy', 'username');
 
     if (!submission) {
@@ -160,7 +161,8 @@ router.put('/:id/review', authMiddleware, async (req, res) => {
     const { status, score, feedback } = req.body;
 
     const submission = await Submission.findById(req.params.id)
-      .populate('challenge');
+      .populate('challenge')
+      .populate('user', 'username email');
 
     if (!submission) {
       return res.status(404).json({
@@ -169,8 +171,13 @@ router.put('/:id/review', authMiddleware, async (req, res) => {
       });
     }
 
-    // Check if user owns the challenge
-    if (submission.challenge.companyId.toString() !== user._id.toString()) {
+    // Check if user owns the challenge or is admin
+    const canReview = (
+      submission.challenge.companyId?.toString() === user._id.toString() ||
+      user.role === 'admin'
+    );
+
+    if (!canReview) {
       return res.status(403).json({
         success: false,
         error: 'You can only review submissions for your own challenges'
@@ -178,10 +185,10 @@ router.put('/:id/review', authMiddleware, async (req, res) => {
     }
 
     // Validate status
-    if (!['approved', 'rejected'].includes(status)) {
+    if (!['approved', 'rejected', 'reviewing'].includes(status)) {
       return res.status(400).json({
         success: false,
-        error: 'Status must be either approved or rejected'
+        error: 'Status must be approved, rejected, or reviewing'
       });
     }
 
@@ -192,14 +199,20 @@ router.put('/:id/review', authMiddleware, async (req, res) => {
     submission.reviewedBy = user._id;
     
     if (status === 'approved' && score !== undefined) {
-      submission.score = Math.max(0, Math.min(100, score));
+      submission.score = Math.max(0, Math.min(100, parseInt(score)));
     }
 
     await submission.save();
 
+    // Populate the updated submission for response
+    const updatedSubmission = await Submission.findById(submission._id)
+      .populate('user', 'username email')
+      .populate('challenge', 'title company difficulty points')
+      .populate('reviewedBy', 'username');
+
     res.json({
       success: true,
-      data: submission,
+      data: updatedSubmission,
       message: 'Submission reviewed successfully'
     });
   } catch (error) {

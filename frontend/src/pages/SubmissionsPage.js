@@ -1,4 +1,4 @@
-// src/pages/SubmissionsPage.js
+// src/pages/SubmissionsPage.js - Corrected version
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ExternalLink, FileText, Trophy, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -14,35 +14,61 @@ const SubmissionsPage = () => {
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    fetchSubmissions();
-    fetchChallenge();
+    fetchData();
   }, [challengeId]);
 
-  const fetchSubmissions = async () => {
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    
     try {
-      // Use correct API function based on context
-      let data;
+      // Fetch submissions first
+      await fetchSubmissions();
+      
+      // Only fetch challenge details if challengeId is provided
       if (challengeId) {
-        data = await getChallengeSubmissions(challengeId);
-        setSubmissions(data.data || []);
-      } else {
-        data = await getUserSubmissions();
-        setSubmissions(data.data || []);
+        await fetchChallenge();
       }
     } catch (error) {
-      setError('Failed to fetch submissions');
+      console.error('Error in fetchData:', error);
+      setError(error.message || 'Failed to fetch data');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchSubmissions = async () => {
+    try {
+      let response;
+      if (challengeId) {
+        // Fetch submissions for a specific challenge (company view)
+        response = await getChallengeSubmissions(challengeId);
+      } else {
+        // Fetch user's own submissions (student view)
+        response = await getUserSubmissions();
+      }
+      
+      // Handle both response formats
+      const submissionsData = response.data || response;
+      setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      throw new Error('Failed to fetch submissions: ' + error.message);
+    }
+  };
+
   const fetchChallenge = async () => {
     try {
-      // ✅ use helper function
-      const data = await getChallenge(challengeId);
-      setChallenge(data);
+      if (!challengeId) return;
+      
+      const response = await getChallenge(challengeId);
+      // Handle both response formats
+      const challengeData = response.data || response;
+      setChallenge(challengeData);
     } catch (error) {
-      setError('Failed to fetch challenge details');
+      console.error('Error fetching challenge:', error);
+      // Don't throw here - challenge details are optional
+      console.warn('Could not fetch challenge details, but continuing...');
     }
   };
 
@@ -56,11 +82,13 @@ const SubmissionsPage = () => {
       case 'approved': return 'text-green-600 bg-green-100';
       case 'rejected': return 'text-red-600 bg-red-100';
       case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'reviewing': return 'text-blue-600 bg-blue-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -90,7 +118,7 @@ const SubmissionsPage = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Challenge Submissions
+                {challengeId ? 'Challenge Submissions' : 'My Submissions'}
               </h1>
               {challenge && (
                 <div className="flex items-center text-gray-600 mb-4">
@@ -99,18 +127,20 @@ const SubmissionsPage = () => {
                 </div>
               )}
             </div>
-            <Link
-              to={`/challenges/${challengeId}`}
-              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              View Challenge
-            </Link>
+            {challengeId && (
+              <Link
+                to={`/challenges/${challengeId}`}
+                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View Challenge
+              </Link>
+            )}
           </div>
 
           {/* Filter Tabs */}
           <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 mt-4">
-            {['all', 'pending', 'approved', 'rejected'].map((status) => (
+            {['all', 'pending', 'reviewing', 'approved', 'rejected'].map((status) => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
@@ -154,7 +184,7 @@ const SubmissionsPage = () => {
               </h3>
               <p className="text-gray-600">
                 {filter === 'all'
-                  ? 'No submissions have been made for this challenge yet.'
+                  ? 'No submissions have been made yet.'
                   : `No ${filter} submissions found.`}
               </p>
             </motion.div>
@@ -175,7 +205,7 @@ const SubmissionsPage = () => {
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {submission.userId?.username || 'Anonymous'}
+                          {submission.user?.username || submission.userId?.username || 'Anonymous'}
                         </h3>
                         <div className="flex items-center text-gray-500 text-sm">
                           <Calendar className="w-4 h-4 mr-1" />
@@ -185,12 +215,13 @@ const SubmissionsPage = () => {
                     </div>
 
                     <div className="flex items-center space-x-3">
-                      {submission.score !== undefined &&
+                      {submission.score !== undefined && 
+                        submission.score !== null &&
                         submission.status === 'approved' && (
                           <div className="flex items-center text-green-600">
                             <Trophy className="w-4 h-4 mr-1" />
                             <span className="font-semibold">
-                              {submission.score}
+                              {submission.score}/100
                             </span>
                           </div>
                         )}
@@ -204,6 +235,18 @@ const SubmissionsPage = () => {
                     </div>
                   </div>
 
+                  {/* Challenge Info (for user submissions view) */}
+                  {!challengeId && submission.challenge && (
+                    <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                      <h4 className="font-medium text-blue-900 mb-1">Challenge:</h4>
+                      <p className="text-blue-800">{submission.challenge.title}</p>
+                      <div className="flex items-center text-blue-600 text-sm mt-1">
+                        <span className="mr-3">Difficulty: {submission.challenge.difficulty}</span>
+                        <span>Points: {submission.challenge.points}</span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Submission Content */}
                   <div className="bg-gray-50 rounded-lg p-4 mb-4">
                     <h4 className="font-medium text-gray-900 mb-2">Solution:</h4>
@@ -211,6 +254,22 @@ const SubmissionsPage = () => {
                       {submission.solution}
                     </p>
                   </div>
+
+                  {/* Repository Link */}
+                  {submission.repoLink && (
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-900 mb-2">Repository:</h4>
+                      <a
+                        href={submission.repoLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        {submission.repoLink}
+                      </a>
+                    </div>
+                  )}
 
                   {/* Code Submission */}
                   {submission.codeSubmission && (
@@ -259,6 +318,24 @@ const SubmissionsPage = () => {
                           Reviewed on {formatDate(submission.reviewedAt)}
                         </div>
                       )}
+                      {submission.reviewedBy && (
+                        <div className="text-yellow-600 text-sm">
+                          Reviewed by: {submission.reviewedBy.username || 'Admin'}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons for company view */}
+                  {challengeId && submission.status === 'pending' && (
+                    <div className="flex space-x-3 mt-4 pt-4 border-t">
+                      <Link
+                        to={`/submissions/${submission._id}/review`}
+                        className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Review Submission
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -266,6 +343,23 @@ const SubmissionsPage = () => {
             ))
           )}
         </div>
+
+        {/* Back to Challenges Button */}
+        {!challengeId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center mt-8"
+          >
+            <Link
+              to="/challenges"
+              className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <ExternalLink className="w-5 h-5 mr-2" />
+              Browse More Challenges
+            </Link>
+          </motion.div>
+        )}
       </div>
     </div>
   );

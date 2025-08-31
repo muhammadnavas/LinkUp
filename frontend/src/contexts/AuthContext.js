@@ -4,7 +4,8 @@ import { createContext, useContext, useEffect, useState } from "react";
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 // Auth Context for managing authentication state
-const AuthContext = createContext();
+
+export const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
