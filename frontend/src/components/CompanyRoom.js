@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChallenges, getChallengeSubmissions } from '../api';
+import { getChallenges, getCompanySubmissions, reviewSubmission } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function CompanyRoom() {
@@ -32,27 +32,22 @@ export default function CompanyRoom() {
       // Fetch company's challenges
       const challengesRes = await getChallenges();
       let companyChallenges = [];
-        if (challengesRes.success) {
-          // Filter challenges created by this company (compare as strings)
-          companyChallenges = challengesRes.data.filter(c => c.companyId && String(c.companyId._id) === String(user.id));
-          console.log('User ID:', user.id);
-          console.log('Filtered challenges:', companyChallenges);
-          setChallenges(companyChallenges);
-        }
-
-      // Fetch submissions for each challenge
-      let allSubmissions = [];
-      for (const challenge of companyChallenges) {
-        const submissionsRes = await getChallengeSubmissions(challenge._id);
-        if (submissionsRes.success) {
-          // Only include submissions not made by the company itself
-          const studentSubmissions = submissionsRes.data.filter(s => s.user && s.user.role === 'student');
-          allSubmissions = allSubmissions.concat(studentSubmissions);
-        }
+      if (challengesRes.success) {
+        // Filter challenges created by this company (compare as strings)
+        companyChallenges = challengesRes.data.filter(c => c.companyId && String(c.companyId._id) === String(user.id));
+        console.log('User ID:', user.id);
+        console.log('Filtered challenges:', companyChallenges);
+        setChallenges(companyChallenges);
       }
-      setSubmissions(allSubmissions);
 
-      // Stats placeholder (implement as needed)
+      // Fetch company submissions directly
+      const submissionsRes = await getCompanySubmissions('all', 1, 50);
+      if (submissionsRes.success) {
+        setSubmissions(submissionsRes.data);
+      }
+
+      // Calculate stats
+      const allSubmissions = submissionsRes.success ? submissionsRes.data : [];
       setStats({
         totalChallenges: companyChallenges.length,
         totalSubmissions: allSubmissions.length,
@@ -68,27 +63,35 @@ export default function CompanyRoom() {
     }
   };
 
-  const handleUpdateSubmissionStatus = async (submissionId, status) => {
+    const handleReviewSubmission = async (submissionId, status, score = null, feedback = '') => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/submissions/${submissionId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      });
-
-      if (response.ok) {
-        // Refresh data after status update
-        fetchData();
+      setLoading(true);
+      
+      const reviewData = {
+        status,
+        feedback
+      };
+      
+      if (status === 'approved' && score !== null) {
+        reviewData.score = score;
+      }
+      
+      const result = await reviewSubmission(submissionId, reviewData);
+      
+      if (result.success) {
+        // Refresh the data to show updated submission
+        await fetchData();
+        setError(null);
+        // Optional: Show success message
+        console.log('Submission reviewed successfully');
       } else {
-        setError('Failed to update submission status');
+        setError(result.error || 'Failed to review submission');
       }
     } catch (err) {
-      console.error('Error updating submission:', err);
-      setError('Failed to update submission status');
+      console.error('Error reviewing submission:', err);
+      setError('Failed to review submission. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -428,6 +431,24 @@ export default function CompanyRoom() {
                         <p className="text-gray-500 text-sm">
                           Submitted on: {new Date(submission.createdAt).toLocaleDateString()}
                         </p>
+                        {submission.repoLink && (
+                          <div className="mt-2">
+                            <a
+                              href={submission.repoLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                              </svg>
+                              <span>GitHub Repository</span>
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                              </svg>
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -450,19 +471,19 @@ export default function CompanyRoom() {
                       {submission.status === 'pending' && (
                         <>
                           <button
-                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'reviewing')}
+                            onClick={() => handleReviewSubmission(submission._id, 'reviewing')}
                             className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition text-sm font-medium"
                           >
                             Start Review
                           </button>
                           <button
-                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'accepted')}
+                            onClick={() => handleReviewSubmission(submission._id, 'approved', 85, 'Great solution!')}
                             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm font-medium"
                           >
                             Accept
                           </button>
                           <button
-                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'rejected')}
+                            onClick={() => handleReviewSubmission(submission._id, 'rejected', null, 'Needs improvement')}
                             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm font-medium"
                           >
                             Reject
@@ -473,13 +494,13 @@ export default function CompanyRoom() {
                       {submission.status === 'reviewing' && (
                         <>
                           <button
-                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'accepted')}
+                            onClick={() => handleReviewSubmission(submission._id, 'approved', 85, 'Good work!')}
                             className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm font-medium"
                           >
                             Accept
                           </button>
                           <button
-                            onClick={() => handleUpdateSubmissionStatus(submission._id, 'rejected')}
+                            onClick={() => handleReviewSubmission(submission._id, 'rejected', null, 'Needs revision')}
                             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm font-medium"
                           >
                             Reject

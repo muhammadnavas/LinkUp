@@ -19,7 +19,7 @@ import { getUserProfile, getUserSubmissions, updateUserProfile } from '../api';
 import { AuthContext } from '../contexts/AuthContext';
 
 const ProfilePage = () => {
-  const { user: authUser, updateUser } = useContext(AuthContext);
+  const { user: authUser } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,10 +46,15 @@ const ProfilePage = () => {
       setLoading(true);
       setError('');
       
+      console.log('Fetching profile and submissions data...');
+      
       const [profileResponse, submissionsResponse] = await Promise.all([
         getUserProfile(),
         getUserSubmissions()
       ]);
+      
+      console.log('Profile response:', profileResponse);
+      console.log('Submissions response:', submissionsResponse);
       
       const profileData = profileResponse.data || profileResponse;
       const submissionsData = submissionsResponse.data || submissionsResponse;
@@ -69,7 +74,7 @@ const ProfilePage = () => {
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setError('Failed to load profile data');
+      setError('Failed to load profile data: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -91,7 +96,6 @@ const ProfilePage = () => {
       const updatedProfile = response.data || response;
       
       setProfile(updatedProfile);
-      updateUser(updatedProfile); // Update auth context
       setIsEditing(false);
       
     } catch (error) {

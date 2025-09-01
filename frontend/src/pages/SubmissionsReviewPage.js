@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, CheckCircle, Clock, ExternalLink, FileText, Save, Star, User, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getSubmission, reviewSubmission } from '../api';
+import { getSubmissionForReview, reviewSubmission } from '../api';
 
 const SubmissionsReviewPage = () => {
   const { submissionId } = useParams();
@@ -25,7 +25,7 @@ const SubmissionsReviewPage = () => {
   const fetchSubmission = async () => {
     try {
       setLoading(true);
-      const response = await getSubmission(submissionId);
+      const response = await getSubmissionForReview(submissionId);
       const submissionData = response.data || response;
       setSubmission(submissionData);
       

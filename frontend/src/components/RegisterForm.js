@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const RegisterForm = ({ role }) => {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -41,6 +42,18 @@ const RegisterForm = ({ role }) => {
       setError('Password must be at least 6 characters long');
       return false;
     }
+    if (formData.username.length < 3) {
+      setError('Username must be at least 3 characters long');
+      return false;
+    }
+    if (formData.username.length > 30) {
+      setError('Username cannot exceed 30 characters');
+      return false;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      setError('Username can only contain letters, numbers, and underscores');
+      return false;
+    }
     return true;
   };
 
@@ -56,6 +69,7 @@ const RegisterForm = ({ role }) => {
       // Prepare data for backend
       const registrationData = {
         name: formData.name,
+        username: formData.username,
         email: formData.email,
         password: formData.password,
         role: role
@@ -112,6 +126,25 @@ const RegisterForm = ({ role }) => {
             required
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your full name"
+            disabled={loading}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+            Username
+          </label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            minLength={3}
+            maxLength={30}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Choose a unique username"
             disabled={loading}
           />
         </div>

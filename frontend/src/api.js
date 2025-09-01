@@ -57,7 +57,7 @@ export const createChallenge = async (challengeData) => {
 
 // Get user's own submissions
 export const getUserSubmissions = async () => {
-  const res = await fetch(`${API_BASE_URL}/submissions`, { headers: getAuthHeaders() });
+  const res = await fetch(`${API_BASE_URL}/auth/submissions`, { headers: getAuthHeaders() });
   return handleResponse(res);
 };
 
@@ -74,6 +74,19 @@ export const reviewSubmission = async (submissionId, reviewData) => {
     headers: getAuthHeaders(),
     body: JSON.stringify(reviewData)
   });
+  return handleResponse(res);
+};
+
+// Get submission for review (company only)
+export const getSubmissionForReview = async (submissionId) => {
+  const res = await fetch(`${API_BASE_URL}/submissions/${submissionId}/review`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
+
+// Get company submissions for review
+export const getCompanySubmissions = async (status = 'all', page = 1, limit = 20) => {
+  const params = new URLSearchParams({ status, page: page.toString(), limit: limit.toString() });
+  const res = await fetch(`${API_BASE_URL}/submissions/company-reviews?${params}`, { headers: getAuthHeaders() });
   return handleResponse(res);
 };
 
@@ -97,19 +110,19 @@ export const register = async (userData) => {
 };
 
 export const verifyToken = async () => {
-  const res = await fetch(`${API_BASE_URL}/auth/verify`, { headers: getAuthHeaders() });
+  const res = await fetch(`${API_BASE_URL}/auth/me`, { headers: getAuthHeaders() });
   return handleResponse(res);
 };
 
 // Get current user's profile
 export const getUserProfile = async () => {
-  const res = await fetch(`${API_BASE_URL}/users/profile`, { headers: getAuthHeaders() });
+  const res = await fetch(`${API_BASE_URL}/auth/me`, { headers: getAuthHeaders() });
   return handleResponse(res);
 };
 
 // Update current user's profile
 export const updateUserProfile = async (profileData) => {
-  const res = await fetch(`${API_BASE_URL}/users/profile`, {
+  const res = await fetch(`${API_BASE_URL}/auth/profile`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(profileData)
@@ -120,8 +133,8 @@ export const updateUserProfile = async (profileData) => {
 // Get leaderboard (optionally by timeframe)
 export const getLeaderboard = async (timeframe = 'all') => {
   const url = timeframe && timeframe !== 'all'
-    ? `${API_BASE_URL}/leaderboard?timeframe=${encodeURIComponent(timeframe)}`
-    : `${API_BASE_URL}/leaderboard`;
+    ? `${API_BASE_URL}/auth/leaderboard?timeframe=${encodeURIComponent(timeframe)}`
+    : `${API_BASE_URL}/auth/leaderboard`;
   const res = await fetch(url, { headers: getAuthHeaders() });
   return handleResponse(res);
 };

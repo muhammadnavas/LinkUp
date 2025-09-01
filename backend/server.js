@@ -12,6 +12,8 @@ const challengeRoutes = require('./routes/challenges');
 const dashboardRoutes = require('./routes/dashboard');
 const adminRoutes = require('./routes/admin');
 const submissionsRoutes = require('./routes/submissions');
+const leaderboardRoutes = require('./routes/leaderboard');
+
 
 dotenv.config();
 
@@ -39,6 +41,8 @@ app.use('/api/challenges', challengeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/submissions', submissionsRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
+
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

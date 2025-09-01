@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -43,8 +43,8 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const result = await response.json();
         console.log('Auth verify response:', result);
-        if (result.success && result.user) {
-          setUser(result.user);
+        if (result.success && result.data) {
+          setUser(result.data);
         } else {
           localStorage.removeItem('token');
           setUser(null);

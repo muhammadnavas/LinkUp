@@ -1,6 +1,6 @@
 // src/pages/LeaderboardPage.js
 import { motion } from 'framer-motion';
-import { Award, Calendar, Crown, Medal, Star, Trophy, TrendingUp, User } from 'lucide-react';
+import { Award, Calendar, Crown, Medal, Star, TrendingUp, Trophy, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getLeaderboard, getUserProfile } from '../api';
 
@@ -20,17 +20,22 @@ const LeaderboardPage = () => {
       setLoading(true);
       setError('');
       
+      console.log('Fetching leaderboard and user data...');
+      
       // Fetch leaderboard and current user data
       const [leaderboardResponse, userResponse] = await Promise.all([
         getLeaderboard(timeframe),
         getUserProfile()
       ]);
       
+      console.log('Leaderboard response:', leaderboardResponse);
+      console.log('User response:', userResponse);
+      
       setLeaderboard(leaderboardResponse.data || leaderboardResponse);
       setCurrentUser(userResponse.data || userResponse);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
-      setError('Failed to load leaderboard data');
+      setError('Failed to load leaderboard data: ' + error.message);
     } finally {
       setLoading(false);
     }

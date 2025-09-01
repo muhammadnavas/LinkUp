@@ -3,10 +3,11 @@ const express = require('express');
 const router = express.Router();
 const Submission = require('../models/Submission');
 const Challenge = require('../models/Challenge');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
+const { reviewSubmission, getSubmissionForReview, getCompanySubmissions } = require('../controllers/submissions');
 
 // POST /api/submissions - Submit solution
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { user } = req;
     const { challengeId, solution, repoLink, codeSubmission } = req.body;
@@ -45,7 +46,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Check if user already submitted
     const existingSubmission = await Submission.findOne({
-      user: user._id,
+      user: user.id,
       challenge: challengeId
     });
 
@@ -58,7 +59,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
     // Create submission
     const submission = new Submission({
-      user: user._id,
+      user: user.id,
       challenge: challengeId,
       solution,
       repoLink,
@@ -88,11 +89,11 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // GET /api/submissions - Get user's submissions
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
     const { user } = req;
     
-    const submissions = await Submission.find({ user: user._id })
+    const submissions = await Submission.find({ user: user.id })
       .populate('challenge', 'title company difficulty points deadline')
       .populate('reviewedBy', 'username')
       .sort({ submittedAt: -1 });
@@ -110,8 +111,11 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/submissions/company-reviews - Get company submissions for review
+router.get('/company-reviews', protect, authorize('company'), getCompanySubmissions);
+
 // GET /api/submissions/:id - Get specific submission
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', protect, async (req, res) => {
   try {
     const { user } = req;
     
@@ -129,8 +133,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
     // Check access rights
     const canView = (
-      submission.user._id.toString() === user._id.toString() ||
-      submission.challenge.companyId?.toString() === user._id.toString() ||
+      submission.user._id.toString() === user.id.toString() ||
+      submission.challenge.companyId?.toString() === user.id.toString() ||
       user.role === 'admin'
     );
 
@@ -154,74 +158,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/submissions/:id/review - Get submission for review (company only)
+router.get('/:id/review', protect, authorize('company'), getSubmissionForReview);
+
 // PUT /api/submissions/:id/review - Review submission (company only)
-router.put('/:id/review', authMiddleware, async (req, res) => {
-  try {
-    const { user } = req;
-    const { status, score, feedback } = req.body;
-
-    const submission = await Submission.findById(req.params.id)
-      .populate('challenge')
-      .populate('user', 'username email');
-
-    if (!submission) {
-      return res.status(404).json({
-        success: false,
-        error: 'Submission not found'
-      });
-    }
-
-    // Check if user owns the challenge or is admin
-    const canReview = (
-      submission.challenge.companyId?.toString() === user._id.toString() ||
-      user.role === 'admin'
-    );
-
-    if (!canReview) {
-      return res.status(403).json({
-        success: false,
-        error: 'You can only review submissions for your own challenges'
-      });
-    }
-
-    // Validate status
-    if (!['approved', 'rejected', 'reviewing'].includes(status)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Status must be approved, rejected, or reviewing'
-      });
-    }
-
-    // Update submission
-    submission.status = status;
-    submission.feedback = feedback || '';
-    submission.reviewedAt = new Date();
-    submission.reviewedBy = user._id;
-    
-    if (status === 'approved' && score !== undefined) {
-      submission.score = Math.max(0, Math.min(100, parseInt(score)));
-    }
-
-    await submission.save();
-
-    // Populate the updated submission for response
-    const updatedSubmission = await Submission.findById(submission._id)
-      .populate('user', 'username email')
-      .populate('challenge', 'title company difficulty points')
-      .populate('reviewedBy', 'username');
-
-    res.json({
-      success: true,
-      data: updatedSubmission,
-      message: 'Submission reviewed successfully'
-    });
-  } catch (error) {
-    console.error('Error reviewing submission:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to review submission'
-    });
-  }
-});
+router.put('/:id/review', protect, authorize('company'), reviewSubmission);
 
 module.exports = router;

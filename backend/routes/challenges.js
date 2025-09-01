@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const Challenge = require('../models/Challenge');
 const Submission = require('../models/Submission');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
 // GET /api/challenges - Get all active challenges
 router.get('/', async (req, res) => {
@@ -69,7 +69,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/challenges - Create new challenge (company only)
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', protect, async (req, res) => {
   try {
     const { user } = req;
     
@@ -112,8 +112,8 @@ router.post('/', authMiddleware, async (req, res) => {
     const challenge = new Challenge({
       title,
       description,
-      company: user.companyName,
-      companyId: user._id,
+      company: user.companyName || user.name, // Use name as fallback
+      companyId: user.id,
       difficulty,
       points,
       tags: tags || [],
@@ -141,7 +141,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // PUT /api/challenges/:id - Update challenge (company only)
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', protect, async (req, res) => {
   try {
     const { user } = req;
     const challenge = await Challenge.findById(req.params.id);
@@ -153,7 +153,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    if (challenge.companyId.toString() !== user._id.toString()) {
+    if (challenge.companyId.toString() !== user.id.toString()) {
       return res.status(403).json({
         success: false,
         error: 'You can only update your own challenges'
@@ -181,7 +181,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 });
 
 // DELETE /api/challenges/:id - Delete challenge (company only)
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', protect, async (req, res) => {
   try {
     const { user } = req;
     const challenge = await Challenge.findById(req.params.id);
@@ -193,7 +193,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       });
     }
 
-    if (challenge.companyId.toString() !== user._id.toString()) {
+    if (challenge.companyId.toString() !== user.id.toString()) {
       return res.status(403).json({
         success: false,
         error: 'You can only delete your own challenges'
@@ -217,7 +217,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
 // GET /api/challenges/:id/submissions - Get submissions for a challenge
 // GET /api/challenges/:id/submissions - Get submissions for a challenge (company only)
-router.get('/:id/submissions', authMiddleware, async (req, res) => {
+router.get('/:id/submissions', protect, async (req, res) => {
   try {
     const { user } = req;
     const challengeId = req.params.id;
@@ -233,7 +233,7 @@ router.get('/:id/submissions', authMiddleware, async (req, res) => {
 
     // Check if user owns the challenge or is admin
     const canView = (
-      challenge.companyId?.toString() === user._id.toString() ||
+      challenge.companyId?.toString() === user.id.toString() ||
       user.role === 'admin'
     );
 

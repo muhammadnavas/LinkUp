@@ -3,12 +3,12 @@ const express = require('express');
 const Challenge = require('../models/Challenge');
 const Submission = require('../models/Submission');
 const User = require('../models/User');
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 // Get dashboard stats for students
-router.get('/student-stats', authMiddleware, async (req, res) => {
+router.get('/student-stats', protect, async (req, res) => {
   try {
     if (req.user.role !== 'student') {
       return res.status(403).json({ success: false, error: 'Access denied' });
@@ -18,7 +18,7 @@ router.get('/student-stats', authMiddleware, async (req, res) => {
     const totalChallenges = await Challenge.countDocuments({ isActive: true });
 
     // Get user's submissions
-    const userSubmissions = await Submission.find({ user: req.user._id })
+    const userSubmissions = await Submission.find({ user: req.user.id })
       .populate('challenge', 'title company points difficulty')
       .sort({ submittedAt: -1 });
 
@@ -74,14 +74,14 @@ router.get('/student-stats', authMiddleware, async (req, res) => {
 });
 
 // Get dashboard stats for companies
-router.get('/company-stats', authMiddleware, async (req, res) => {
+router.get('/company-stats', protect, async (req, res) => {
   try {
     if (req.user.role !== 'company' && req.user.role !== 'recruiter') {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
     // Get challenges created by this company
-    const companyChallenges = await Challenge.find({ createdBy: req.user._id });
+    const companyChallenges = await Challenge.find({ createdBy: req.user.id });
     const challengeIds = companyChallenges.map(c => c._id);
 
     // Get submissions for company's challenges
@@ -128,13 +128,13 @@ router.get('/company-stats', authMiddleware, async (req, res) => {
 });
 
 // Get all submissions for a user (students only)
-router.get('/submissions', authMiddleware, async (req, res) => {
+router.get('/submissions', protect, async (req, res) => {
   try {
     if (req.user.role !== 'student') {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    const submissions = await Submission.find({ user: req.user._id })
+    const submissions = await Submission.find({ user: req.user.id })
       .populate('challenge', 'title company points difficulty deadline')
       .sort({ submittedAt: -1 });
 

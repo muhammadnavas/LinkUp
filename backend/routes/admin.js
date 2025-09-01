@@ -6,14 +6,14 @@ const Submission = require('../models/Submission');
 const Activity = require('../models/Activity');
 const emailService = require('../utils/emailService');
 
-const { authMiddleware, requireRole } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-const requireAdmin = requireRole('admin');
+const requireAdmin = authorize('admin');
 
 const router = express.Router();
 
 // Get all submissions for review
-router.get('/submissions', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/submissions', protect, requireAdmin, async (req, res) => {
   try {
     const { status = 'pending', page = 1, limit = 20 } = req.query;
     const skip = (page - 1) * limit;
@@ -43,7 +43,7 @@ router.get('/submissions', authMiddleware, requireAdmin, async (req, res) => {
 });
 
 // Review submission
-router.put('/submissions/:id/review', authMiddleware, requireAdmin, async (req, res) => {
+router.put('/submissions/:id/review', protect, requireAdmin, async (req, res) => {
   try {
     const { score, feedback } = req.body;
 
@@ -63,7 +63,7 @@ router.put('/submissions/:id/review', authMiddleware, requireAdmin, async (req, 
     submission.status = 'reviewed';
     submission.score = score;
     submission.feedback = feedback;
-    submission.reviewedBy = req.user._id;
+    submission.reviewedBy = req.user.id;
     submission.reviewedAt = new Date();
 
     await submission.save();
@@ -113,7 +113,7 @@ router.put('/submissions/:id/review', authMiddleware, requireAdmin, async (req, 
 });
 
 // Get platform analytics
-router.get('/analytics', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/analytics', protect, requireAdmin, async (req, res) => {
   try {
     const { timeRange = '30d' } = req.query;
 
@@ -172,7 +172,7 @@ router.get('/analytics', authMiddleware, requireAdmin, async (req, res) => {
 });
 
 // Get user management data
-router.get('/users', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/users', protect, requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 20, search } = req.query;
     const skip = (page - 1) * limit;
