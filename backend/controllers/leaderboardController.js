@@ -17,10 +17,11 @@ const getDetailedLeaderboard = async (req, res) => {
     let dateFilter = {};
     let baseFilter = { 
       isActive: true,
+      role: 'student', // Only show students in leaderboard by default
       challengesCompleted: { $gte: parseInt(minChallenges) }
     };
 
-    // Add role filter if specified
+    // Override role filter if explicitly specified (for admin purposes)
     if (role && ['student', 'company'].includes(role)) {
       baseFilter.role = role;
     }
@@ -51,9 +52,12 @@ const getDetailedLeaderboard = async (req, res) => {
       rank: index + 1
     }));
 
-    // Get statistics
-    const totalParticipants = await User.countDocuments({ isActive: true });
-    const totalChallengesCompleted = await Submission.countDocuments({ status: 'approved' });
+    // Get statistics (only for students)
+    const totalParticipants = await User.countDocuments({ isActive: true, role: 'student' });
+    const totalChallengesCompleted = await Submission.countDocuments({ 
+      status: 'approved',
+      user: { $in: await User.find({ role: 'student' }).distinct('_id') }
+    });
     
     const avgCommunityScore = users.length > 0 
       ? Math.round(users.reduce((sum, user) => sum + user.averageScore, 0) / users.length)
@@ -96,7 +100,7 @@ const getUserRank = async (req, res) => {
       });
     }
 
-    // Get all users above this user's points
+    // Get all students above this user's points (only students should be ranked)
     let dateFilter = {};
     if (timeframe === 'weekly') {
       const oneWeekAgo = new Date();
@@ -108,8 +112,10 @@ const getUserRank = async (req, res) => {
       dateFilter.lastActiveAt = { $gte: oneMonthAgo };
     }
 
+    // Only rank among students
     const usersAbove = await User.countDocuments({
       isActive: true,
+      role: 'student',
       totalPoints: { $gt: user.totalPoints },
       ...dateFilter
     });

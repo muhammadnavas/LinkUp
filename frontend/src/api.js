@@ -13,9 +13,19 @@ const getAuthHeaders = () => {
 const handleResponse = async (response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: 'Network error' }));
-    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    console.error('API Error Response:', errorData);
+    
+    // If there are validation details, show them
+    if (errorData.details && Array.isArray(errorData.details)) {
+      const validationErrors = errorData.details.map(detail => detail.msg).join(', ');
+      throw new Error(validationErrors);
+    }
+    
+    throw new Error(errorData.message || errorData.error || `HTTP error! status: ${response.status}`);
   }
-  return response.json();
+  const data = await response.json();
+  console.log('API Success Response:', data);
+  return data;
 };
 
 // API functions
@@ -122,6 +132,7 @@ export const getUserProfile = async () => {
 
 // Update current user's profile
 export const updateUserProfile = async (profileData) => {
+  console.log('Sending profile update request:', profileData);
   const res = await fetch(`${API_BASE_URL}/auth/profile`, {
     method: 'PUT',
     headers: getAuthHeaders(),

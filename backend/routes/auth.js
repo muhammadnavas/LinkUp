@@ -244,16 +244,43 @@ const profileUpdateValidation = [
     .withMessage('Location cannot exceed 100 characters'),
   body('website')
     .optional()
-    .isURL()
-    .withMessage('Please provide a valid URL'),
+    .customSanitizer((value) => {
+      // Convert empty strings to null
+      return value && value.trim() ? value.trim() : null;
+    })
+    .custom((value) => {
+      // Only validate if there's actually a value
+      if (value && !value.match(/^https?:\/\/.+/)) {
+        throw new Error('Please provide a valid URL starting with http:// or https://');
+      }
+      return true;
+    }),
   body('githubProfile')
     .optional()
-    .isURL()
-    .withMessage('Please provide a valid GitHub URL'),
+    .customSanitizer((value) => {
+      // Convert empty strings to null
+      return value && value.trim() ? value.trim() : null;
+    })
+    .custom((value) => {
+      // Only validate if there's actually a value
+      if (value && !value.match(/^https?:\/\/(www\.)?github\.com\/.+/)) {
+        throw new Error('Please provide a valid GitHub URL');
+      }
+      return true;
+    }),
   body('linkedinProfile')
     .optional()
-    .isURL()
-    .withMessage('Please provide a valid LinkedIn URL')
+    .customSanitizer((value) => {
+      // Convert empty strings to null
+      return value && value.trim() ? value.trim() : null;
+    })
+    .custom((value) => {
+      // Only validate if there's actually a value
+      if (value && !value.match(/^https?:\/\/(www\.)?(linkedin\.com|linkedin\.in)\/.+/)) {
+        throw new Error('Please provide a valid LinkedIn URL');
+      }
+      return true;
+    })
 ];
 
 // Routes

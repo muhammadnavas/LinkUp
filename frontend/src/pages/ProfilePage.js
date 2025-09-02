@@ -92,11 +92,35 @@ const ProfilePage = () => {
       setUpdating(true);
       setError('');
       
-      const response = await updateUserProfile(editData);
+      // Clean the data before sending
+      const cleanedData = {
+        username: editData.username?.trim() || '',
+        email: editData.email?.trim() || '',
+        bio: editData.bio?.trim() || '',
+        location: editData.location?.trim() || '',
+        website: editData.website?.trim() || '',
+        githubProfile: editData.githubProfile?.trim() || '',
+        linkedinProfile: editData.linkedinProfile?.trim() || ''
+      };
+      
+      // Remove empty strings to avoid validation issues
+      Object.keys(cleanedData).forEach(key => {
+        if (cleanedData[key] === '') {
+          delete cleanedData[key];
+        }
+      });
+      
+      console.log('Saving profile with data:', cleanedData);
+      
+      const response = await updateUserProfile(cleanedData);
+      console.log('Profile update response:', response);
+      
       const updatedProfile = response.data || response;
       
       setProfile(updatedProfile);
       setIsEditing(false);
+      
+      console.log('Profile update successful');
       
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -382,13 +406,13 @@ const ProfilePage = () => {
                 </div>
                 <div className="bg-white rounded-xl shadow-lg p-4 text-center">
                   <Award className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-gray-900">{profile?.companyPoints || 0}</div>
-                  <p className="text-gray-600 text-sm">Company Points</p>
+                  <div className="text-xl font-bold text-gray-900">{profile?.challengesCreated || 0}</div>
+                  <p className="text-gray-600 text-sm">Challenges Created</p>
                 </div>
                 <div className="bg-white rounded-xl shadow-lg p-4 text-center">
                   <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                   <div className="text-xl font-bold text-gray-900">{profile?.totalUsers || 0}</div>
-                  <p className="text-gray-600 text-sm">Total Participants</p>
+                  <p className="text-gray-600 text-sm">Active Participants</p>
                 </div>
               </motion.div>
             ) : (

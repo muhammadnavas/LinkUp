@@ -623,12 +623,25 @@ const getCurrentUser = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
+    console.log('Profile update request received:', req.body);
+    console.log('Field values:', {
+      website: typeof req.body.website, 
+      githubProfile: typeof req.body.githubProfile,
+      linkedinProfile: typeof req.body.linkedinProfile,
+      websiteValue: req.body.website,
+      githubValue: req.body.githubProfile,
+      linkedinValue: req.body.linkedinProfile
+    });
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      console.log('Request body:', req.body);
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
-        details: errors.array()
+        details: errors.array(),
+        message: errors.array().map(err => `${err.param}: ${err.msg}`).join(', ')
       });
     }
 
@@ -639,6 +652,12 @@ const updateProfile = async (req, res) => {
         error: 'User not found'
       });
     }
+
+    console.log('Current user data:', {
+      username: user.username,
+      email: user.email,
+      role: user.role
+    });
 
     const {
       username,
@@ -684,11 +703,11 @@ const updateProfile = async (req, res) => {
     }
 
     // Update common fields
-    if (bio !== undefined) user.bio = bio;
-    if (location !== undefined) user.location = location;
-    if (website !== undefined) user.website = website;
-    if (githubProfile !== undefined) user.githubProfile = githubProfile;
-    if (linkedinProfile !== undefined) user.linkedinProfile = linkedinProfile;
+    if (bio !== undefined) user.bio = bio ? bio.trim() : '';
+    if (location !== undefined) user.location = location ? location.trim() : '';
+    if (website !== undefined) user.website = website ? website.trim() : '';
+    if (githubProfile !== undefined) user.githubProfile = githubProfile ? githubProfile.trim() : '';
+    if (linkedinProfile !== undefined) user.linkedinProfile = linkedinProfile ? linkedinProfile.trim() : '';
 
     // Update role-specific fields
     if (user.role === 'student') {
@@ -703,6 +722,8 @@ const updateProfile = async (req, res) => {
     }
 
     await user.save();
+
+    console.log('Profile updated successfully for user:', user.username);
 
     res.json({
       success: true,

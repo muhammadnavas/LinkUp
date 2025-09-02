@@ -494,6 +494,11 @@ userSchema.methods.updateLastLogin = async function() {
 
 // Method to update user stats based on submissions
 userSchema.methods.updateStats = async function () {
+  // Only students should earn points from submissions
+  if (this.role !== 'student') {
+    return this.save();
+  }
+
   const Submission = require('./Submission');
   const submissions = await Submission.find({ user: this._id, status: 'approved' });
 

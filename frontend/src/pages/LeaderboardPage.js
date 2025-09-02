@@ -92,12 +92,29 @@ const LeaderboardPage = () => {
         >
           <div className="flex items-center justify-center mb-4">
             <Trophy className="w-8 h-8 text-yellow-500 mr-3" />
-            <h1 className="text-4xl font-bold text-gray-900">Leaderboard</h1>
+            <h1 className="text-4xl font-bold text-gray-900">Student Leaderboard</h1>
           </div>
           <p className="text-gray-600 text-lg">
-            Compete with fellow developers and showcase your skills
+            Compete with fellow student developers and showcase your coding skills
           </p>
         </motion.div>
+
+        {/* Company User Message */}
+        {currentUser && currentUser.role === 'company' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-blue-100 border border-blue-400 text-blue-700 px-6 py-4 rounded-lg mb-8"
+          >
+            <div className="flex items-center">
+              <Award className="w-6 h-6 mr-3" />
+              <div>
+                <h3 className="font-semibold">Company Dashboard</h3>
+                <p className="text-sm">As a company user, you can view the student leaderboard to scout talent, but you don't participate in the points competition.</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Timeframe Filter */}
         <motion.div
@@ -143,7 +160,7 @@ const LeaderboardPage = () => {
         )}
 
         {/* Current User Stats */}
-        {currentUser && (
+        {currentUser && currentUser.role === 'student' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

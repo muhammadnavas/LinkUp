@@ -52,6 +52,11 @@ const checkAndAwardAchievements = async (userId) => {
     const user = await User.findById(userId);
     if (!user) return [];
 
+    // Only students should get achievements from coding challenges
+    if (user.role !== 'student') {
+      return [];
+    }
+
     const submissions = await Submission.find({ 
       user: userId, 
       status: 'approved' 
