@@ -13,7 +13,7 @@ export default function CompanyRoom() {
     totalChallenges: 0,
     totalSubmissions: 0,
     pendingReviews: 0,
-    completedReviews: 0,
+    reviewedChallenges: 0,
     recentActivity: []
   });
   const [loading, setLoading] = useState(true);
@@ -48,11 +48,20 @@ export default function CompanyRoom() {
 
       // Calculate stats
       const allSubmissions = submissionsRes.success ? submissionsRes.data : [];
+      
+      // Calculate reviewed challenges (challenges that have at least one reviewed submission)
+      const challengesWithReviews = new Set();
+      allSubmissions.forEach(submission => {
+        if (submission.status === 'approved' || submission.status === 'rejected') {
+          challengesWithReviews.add(submission.challenge._id || submission.challenge);
+        }
+      });
+      
       setStats({
         totalChallenges: companyChallenges.length,
         totalSubmissions: allSubmissions.length,
         pendingReviews: allSubmissions.filter(s => s.status === 'pending').length,
-        completedReviews: allSubmissions.filter(s => s.status === 'approved' || s.status === 'rejected').length,
+        reviewedChallenges: challengesWithReviews.size,
         recentActivity: allSubmissions.slice(0, 5)
       });
     } catch (err) {
@@ -243,8 +252,9 @@ export default function CompanyRoom() {
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Completed Reviews</p>
-                    <p className="text-2xl font-bold text-gray-800">{stats.completedReviews}</p>
+                    <p className="text-sm font-medium text-gray-600">Reviewed Challenges</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.reviewedChallenges}</p>
+                    <p className="text-xs text-purple-600">Challenges with reviews</p>
                   </div>
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,7 +330,7 @@ export default function CompanyRoom() {
                     Review Submissions
                   </button>
                   <button 
-                    onClick={() => navigate('/analytics')}
+                    onClick={() => setActiveTab('overview')}
                     className="w-full px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-medium"
                   >
                     View Analytics
@@ -462,7 +472,12 @@ export default function CompanyRoom() {
 
                     <div className="flex flex-wrap gap-2">
                       <button
-                        onClick={() => navigate(`/submission/${submission._id}`)}
+                        onClick={() => {
+                          console.log('Navigating to review page for submission:', submission);
+                          console.log('Submission ID:', submission._id);
+                          console.log('Full navigation path:', `/submissions/${submission._id}/review`);
+                          navigate(`/submissions/${submission._id}/review`);
+                        }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm font-medium"
                       >
                         View Submission

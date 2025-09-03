@@ -15,13 +15,14 @@ import {
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getUserProfile, getUserSubmissions, updateUserProfile } from '../api';
+import { getUserProfile, getUserSubmissions, updateUserProfile, getChallenges } from '../api';
 import { AuthContext } from '../contexts/AuthContext';
 
 const ProfilePage = () => {
   const { user: authUser } = useContext(AuthContext);
   const [profile, setProfile] = useState(null);
   const [submissions, setSubmissions] = useState([]);
+  const [companyStats, setCompanyStats] = useState({ challengesCreated: 0, submissionsReviewed: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -61,6 +62,32 @@ const ProfilePage = () => {
       
       setProfile(profileData);
       setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
+      
+      // If user is a company, fetch their challenges to calculate stats
+      if (profileData.role === 'company') {
+        try {
+          const challengesResponse = await getChallenges();
+          if (challengesResponse.success) {
+            // Filter challenges created by this company
+            const companyChallenges = challengesResponse.data.filter(c => 
+              c.companyId && String(c.companyId._id) === String(authUser.id)
+            );
+            console.log('Company challenges:', companyChallenges);
+            
+            setCompanyStats({
+              challengesCreated: companyChallenges.length,
+              submissionsReviewed: profileData.submissionsReviewed || 0
+            });
+          }
+        } catch (challengeError) {
+          console.error('Error fetching company challenges:', challengeError);
+          // Don't fail the entire page if challenges can't be fetched
+          setCompanyStats({
+            challengesCreated: 0,
+            submissionsReviewed: profileData.submissionsReviewed || 0
+          });
+        }
+      }
       
       // Set edit data
       setEditData({
@@ -396,23 +423,13 @@ const ProfilePage = () => {
               >
                 <div className="bg-white rounded-xl shadow-lg p-4 text-center">
                   <Trophy className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-gray-900">{profile?.challengesCreated || 0}</div>
+                  <div className="text-xl font-bold text-gray-900">{companyStats.challengesCreated}</div>
                   <p className="text-gray-600 text-sm">Challenges Created</p>
                 </div>
                 <div className="bg-white rounded-xl shadow-lg p-4 text-center">
                   <Star className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-gray-900">{profile?.submissionsReviewed || 0}</div>
+                  <div className="text-xl font-bold text-gray-900">{companyStats.submissionsReviewed}</div>
                   <p className="text-gray-600 text-sm">Submissions Reviewed</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-lg p-4 text-center">
-                  <Award className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-gray-900">{profile?.challengesCreated || 0}</div>
-                  <p className="text-gray-600 text-sm">Challenges Created</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-lg p-4 text-center">
-                  <FileText className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                  <div className="text-xl font-bold text-gray-900">{profile?.totalUsers || 0}</div>
-                  <p className="text-gray-600 text-sm">Active Participants</p>
                 </div>
               </motion.div>
             ) : (
@@ -448,7 +465,7 @@ const ProfilePage = () => {
 
           {/* Recent Activity */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Recent Submissions */}
+            {/* Recent Activity - Different for Companies vs Students */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -456,16 +473,33 @@ const ProfilePage = () => {
               className="bg-white rounded-xl shadow-lg p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Recent Submissions</h3>
-                <Link
-                  to="/submissions"
-                  className="text-purple-600 hover:text-purple-800 transition-colors text-sm font-medium"
-                >
-                  View All →
-                </Link>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {profile?.role === 'company' ? 'Company Activity' : 'Recent Submissions'}
+                </h3>
+                {profile?.role !== 'company' && (
+                  <Link
+                    to="/submissions"
+                    className="text-purple-600 hover:text-purple-800 transition-colors text-sm font-medium"
+                  >
+                    View All →
+                  </Link>
+                )}
               </div>
 
-              {submissions.length === 0 ? (
+              {profile?.role === 'company' ? (
+                <div className="text-center py-8">
+                  <Trophy className="w-16 h-16 text-blue-500 mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Company Dashboard</h4>
+                  <p className="text-gray-600 mb-4">Manage your challenges and review submissions from your company dashboard.</p>
+                  <Link
+                    to="/company"
+                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Go to Dashboard
+                  </Link>
+                </div>
+              ) : submissions.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">No Submissions Yet</h4>
@@ -533,89 +567,93 @@ const ProfilePage = () => {
               )}
             </motion.div>
 
-            {/* Achievements */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white rounded-xl shadow-lg p-6"
-            >
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Achievements</h3>
-              
-              {profile?.achievements && profile.achievements.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {profile.achievements.map((achievement, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-4 text-white"
-                    >
-                      <div className="flex items-center">
-                        <Trophy className="w-6 h-6 mr-3" />
-                        <div>
-                          <h4 className="font-semibold">{achievement.title}</h4>
-                          <p className="text-yellow-100 text-sm">{achievement.description}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Award className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">No Achievements Yet</h4>
-                  <p className="text-gray-600">Complete challenges to unlock achievements!</p>
-                </div>
-              )}
-            </motion.div>
-
-            {/* Activity Timeline */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl shadow-lg p-6"
-            >
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Activity Timeline</h3>
-              
-              {submissions.length > 0 ? (
-                <div className="space-y-4">
-                  {submissions.slice(0, 10).map((submission, index) => (
-                    <div key={submission._id} className="flex items-center space-x-4">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900">
-                          Submitted solution for{' '}
-                          <span className="font-medium">
-                            {submission.challenge?.title || 'Unknown Challenge'}
-                          </span>
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatDate(submission.submittedAt)}
-                        </p>
-                      </div>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          submission.status
-                        )}`}
+            {/* Achievements - Only for Students */}
+            {profile?.role !== 'company' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-xl shadow-lg p-6"
+              >
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Achievements</h3>
+                
+                {profile?.achievements && profile.achievements.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {profile.achievements.map((achievement, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg p-4 text-white"
                       >
-                        {submission.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">No Activity Yet</h4>
-                  <p className="text-gray-600">Your challenge activity will appear here.</p>
-                </div>
-              )}
-            </motion.div>
+                        <div className="flex items-center">
+                          <Trophy className="w-6 h-6 mr-3" />
+                          <div>
+                            <h4 className="font-semibold">{achievement.title}</h4>
+                            <p className="text-yellow-100 text-sm">{achievement.description}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Award className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No Achievements Yet</h4>
+                    <p className="text-gray-600">Complete challenges to unlock achievements!</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Activity Timeline - Different for Companies vs Students */}
+            {profile?.role !== 'company' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white rounded-xl shadow-lg p-6"
+              >
+                <h3 className="text-xl font-bold text-gray-900 mb-6">Activity Timeline</h3>
+                
+                {submissions.length > 0 ? (
+                  <div className="space-y-4">
+                    {submissions.slice(0, 10).map((submission, index) => (
+                      <div key={submission._id} className="flex items-center space-x-4">
+                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900">
+                            Submitted solution for{' '}
+                            <span className="font-medium">
+                              {submission.challenge?.title || 'Unknown Challenge'}
+                            </span>
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatDate(submission.submittedAt)}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            submission.status
+                          )}`}
+                        >
+                          {submission.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No Activity Yet</h4>
+                    <p className="text-gray-600">Your challenge activity will appear here.</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
           </div>
         </div>
       </div>

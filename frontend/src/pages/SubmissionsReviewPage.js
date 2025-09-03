@@ -25,8 +25,11 @@ const SubmissionsReviewPage = () => {
   const fetchSubmission = async () => {
     try {
       setLoading(true);
+      console.log('Fetching submission with ID:', submissionId);
       const response = await getSubmissionForReview(submissionId);
+      console.log('Submission response:', response);
       const submissionData = response.data || response;
+      console.log('Submission data:', submissionData);
       setSubmission(submissionData);
       
       // Pre-fill existing review data if any
@@ -39,7 +42,7 @@ const SubmissionsReviewPage = () => {
       }
     } catch (error) {
       console.error('Error fetching submission:', error);
-      setError('Failed to fetch submission details');
+      setError('Failed to fetch submission details: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -115,19 +118,21 @@ const SubmissionsReviewPage = () => {
     );
   }
 
-  if (!submission) {
+  if (!submission && !loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-lg p-8 text-center">
           <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Submission Not Found</h2>
-          <p className="text-gray-600 mb-4">The submission you're looking for doesn't exist or you don't have permission to view it.</p>
+          <p className="text-gray-600 mb-4">
+            {error || "The submission you're looking for doesn't exist or you don't have permission to view it."}
+          </p>
           <Link
-            to="/challenges"
+            to="/company"
             className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Challenges
+            Back to Dashboard
           </Link>
         </div>
       </div>

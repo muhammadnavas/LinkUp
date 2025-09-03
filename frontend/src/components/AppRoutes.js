@@ -12,11 +12,12 @@ import StudentRoom from './StudentRoom';
 // Pages
 import ChallengePage from '../pages/ChallengePage';
 import CreateChallengePage from '../pages/CreateChallengePage';
+import EditChallengePage from '../pages/EditChallengePage';
 import Home from '../pages/Home';
-import SubmissionsPage from '../pages/SubmissionsPage';
-import SubmissionsReviewPage from '../pages/SubmissionsReviewPage';
 import LeaderboardPage from '../pages/LeaderboardPage';
 import ProfilePage from '../pages/ProfilePage';
+import SubmissionsPage from '../pages/SubmissionsPage';
+import SubmissionsReviewPage from '../pages/SubmissionsReviewPage';
 
 // Dashboard Route Handler - redirects to appropriate dashboard
 const DashboardRoute = () => {
@@ -160,12 +161,21 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
       />
 
 
-      {/* Company-specific routes */}
+// Company-specific routes
       <Route
         path="/create-challenge"
         element={
           <ProtectedRoute requiredRole="company">
             <CreateChallengePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/edit-challenge/:challengeId"
+        element={
+          <ProtectedRoute requiredRole="company">
+            <EditChallengePage />
           </ProtectedRoute>
         }
       />

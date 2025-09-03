@@ -65,6 +65,16 @@ export const createChallenge = async (challengeData) => {
   return handleResponse(res);
 };
 
+// Update a challenge (company only)
+export const updateChallenge = async (challengeId, challengeData) => {
+  const res = await fetch(`${API_BASE_URL}/challenges/${challengeId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(challengeData)
+  });
+  return handleResponse(res);
+};
+
 // Get user's own submissions
 export const getUserSubmissions = async () => {
   const res = await fetch(`${API_BASE_URL}/auth/submissions`, { headers: getAuthHeaders() });
