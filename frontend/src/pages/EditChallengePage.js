@@ -35,11 +35,6 @@ export default function EditChallengePage() {
     maxSubmissions: 1
   });
 
-  // Examples state
-  const [examples, setExamples] = useState([
-    { input: '', output: '', explanation: '' }
-  ]);
-
   // UI state
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,11 +73,6 @@ export default function EditChallengePage() {
         maxSubmissions: challenge.maxSubmissions || 1
       });
 
-      setExamples(challenge.examples && challenge.examples.length > 0 
-        ? challenge.examples 
-        : [{ input: '', output: '', explanation: '' }]
-      );
-
     } catch (error) {
       console.error('Error fetching challenge:', error);
       setSubmitError('Failed to load challenge data');
@@ -105,25 +95,6 @@ export default function EditChallengePage() {
         ...prev,
         [name]: ''
       }));
-    }
-  };
-
-  // Handle example changes
-  const handleExampleChange = (index, field, value) => {
-    const updatedExamples = [...examples];
-    updatedExamples[index][field] = value;
-    setExamples(updatedExamples);
-  };
-
-  // Add new example
-  const addExample = () => {
-    setExamples(prev => [...prev, { input: '', output: '', explanation: '' }]);
-  };
-
-  // Remove example
-  const removeExample = (index) => {
-    if (examples.length > 1) {
-      setExamples(prev => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -157,12 +128,6 @@ export default function EditChallengePage() {
       newErrors.requirements = 'Requirements must be less than 2000 characters';
     }
 
-    // Validate examples
-    const validExamples = examples.filter(ex => ex.input.trim() && ex.output.trim());
-    if (validExamples.length === 0) {
-      newErrors.examples = 'At least one example with input and output is required';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -183,7 +148,6 @@ export default function EditChallengePage() {
       const challengeData = {
         ...formData,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        examples: examples.filter(ex => ex.input.trim() && ex.output.trim()),
         points: parseInt(formData.points),
         maxSubmissions: parseInt(formData.maxSubmissions)
       };
@@ -360,84 +324,6 @@ export default function EditChallengePage() {
                 {formData.description.length}/5000 characters
               </p>
             </div>
-          </div>
-
-          {/* Examples */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Examples</h2>
-              <button
-                type="button"
-                onClick={addExample}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
-              >
-                Add Example
-              </button>
-            </div>
-            
-            {errors.examples && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm">{errors.examples}</p>
-              </div>
-            )}
-
-            {examples.map((example, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-medium text-gray-700">Example {index + 1}</h3>
-                  {examples.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeExample(index)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Input
-                    </label>
-                    <textarea
-                      value={example.input}
-                      onChange={(e) => handleExampleChange(index, 'input', e.target.value)}
-                      rows={3}
-                      placeholder="Sample input..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Expected Output
-                    </label>
-                    <textarea
-                      value={example.output}
-                      onChange={(e) => handleExampleChange(index, 'output', e.target.value)}
-                      rows={3}
-                      placeholder="Expected output..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Explanation (Optional)
-                  </label>
-                  <textarea
-                    value={example.explanation}
-                    onChange={(e) => handleExampleChange(index, 'explanation', e.target.value)}
-                    rows={2}
-                    placeholder="Explain the example..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            ))}
           </div>
 
           {/* Additional Settings */}

@@ -25,13 +25,19 @@ const SubmissionsReviewPage = () => {
   const fetchSubmission = async () => {
     try {
       setLoading(true);
-      console.log('Fetching submission with ID:', submissionId);
+      if (!submissionId) {
+        setError('No submission ID provided.');
+        setSubmission(null);
+        return;
+      }
       const response = await getSubmissionForReview(submissionId);
-      console.log('Submission response:', response);
       const submissionData = response.data || response;
-      console.log('Submission data:', submissionData);
+      if (!submissionData || !submissionData._id) {
+        setError('Submission not found or you do not have permission to view it.');
+        setSubmission(null);
+        return;
+      }
       setSubmission(submissionData);
-      
       // Pre-fill existing review data if any
       if (submissionData.status !== 'pending') {
         setReviewData({
@@ -41,8 +47,8 @@ const SubmissionsReviewPage = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching submission:', error);
-      setError('Failed to fetch submission details: ' + error.message);
+      setError('Failed to fetch submission details: ' + (error.message || error));
+      setSubmission(null);
     } finally {
       setLoading(false);
     }

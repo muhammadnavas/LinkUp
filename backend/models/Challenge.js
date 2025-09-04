@@ -1,21 +1,6 @@
 // models/Challenge.js
 const mongoose = require('mongoose');
 
-const exampleSchema = new mongoose.Schema({
-  input: {
-    type: String,
-    required: true
-  },
-  output: {
-    type: String,
-    required: true
-  },
-  explanation: {
-    type: String,
-    default: ''
-  }
-});
-
 const challengeSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -53,7 +38,6 @@ const challengeSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
-  examples: [exampleSchema],
   deadline: {
     type: Date,
     required: true

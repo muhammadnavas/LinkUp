@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getUserProfile, getUserSubmissions, updateUserProfile, getChallenges } from '../api';
+import { getChallenges, getUserProfile, getUserSubmissions, updateUserProfile } from '../api';
 import { AuthContext } from '../contexts/AuthContext';
 
 const ProfilePage = () => {

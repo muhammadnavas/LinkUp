@@ -324,7 +324,7 @@ export default function CompanyRoom() {
                     Manage Challenges
                   </button>
                   <button 
-                    onClick={() => setActiveTab('submissions')}
+                    onClick={() => navigate('/submissions')}
                     className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-medium"
                   >
                     Review Submissions
@@ -473,10 +473,11 @@ export default function CompanyRoom() {
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() => {
-                          console.log('Navigating to review page for submission:', submission);
-                          console.log('Submission ID:', submission._id);
-                          console.log('Full navigation path:', `/submissions/${submission._id}/review`);
-                          navigate(`/submissions/${submission._id}/review`);
+                          if (submission && submission._id) {
+                            navigate(`/submissions/${submission._id}/review`);
+                          } else {
+                            alert('Submission ID missing. Cannot review this submission.');
+                          }
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm font-medium"
                       >
