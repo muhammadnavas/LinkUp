@@ -1,45 +1,77 @@
 // src/pages/LeaderboardPage.js
 import { motion } from 'framer-motion';
-import { Award, Calendar, Crown, Medal, Star, TrendingUp, Trophy, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { getLeaderboard, getUserProfile } from '../api';
+import { Award, Building2, Calendar, Crown, Medal, Star, TrendingUp, Trophy, User } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getLeaderboard, getPublicLeaderboard, getPublicStats, getUserProfile } from '../api';
+import { useAuth } from '../contexts/AuthContext';
 
 const LeaderboardPage = () => {
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeframe, setTimeframe] = useState('all'); // all, monthly, weekly
+  const [activeTab, setActiveTab] = useState('students'); // students, companies
 
+  // Check URL parameters to set initial tab
   useEffect(() => {
-    fetchData();
-  }, [timeframe]);
+    const urlParams = new URLSearchParams(location.search);
+    const type = urlParams.get('type');
+    if (type === 'companies') {
+      setActiveTab('companies');
+    }
+  }, [location]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       
-      console.log('Fetching leaderboard and user data...');
-      
-      // Fetch leaderboard and current user data
-      const [leaderboardResponse, userResponse] = await Promise.all([
-        getLeaderboard(timeframe),
-        getUserProfile()
-      ]);
-      
-      console.log('Leaderboard response:', leaderboardResponse);
-      console.log('User response:', userResponse);
-      
-      setLeaderboard(leaderboardResponse.data || leaderboardResponse);
-      setCurrentUser(userResponse.data || userResponse);
+      if (activeTab === 'students') {
+        // Fetch student leaderboard
+        let leaderboardResponse;
+        if (user) {
+          // Use authenticated endpoint for logged-in users
+          leaderboardResponse = await getLeaderboard(timeframe);
+        } else {
+          // Use public endpoint for non-logged-in users
+          leaderboardResponse = await getPublicLeaderboard(timeframe, 100);
+        }
+        
+        setLeaderboard(leaderboardResponse.data || leaderboardResponse);
+        
+        // Only fetch user data if logged in
+        if (user) {
+          try {
+            const userResponse = await getUserProfile();
+            setCurrentUser(userResponse.data || userResponse);
+          } catch (userError) {
+            // Don't set error for user profile failure when not logged in
+          }
+        }
+      } else {
+        // Fetch companies data
+        const statsResponse = await getPublicStats();
+        if (statsResponse.success) {
+          setCompanies(statsResponse.data.activeCompanies || []);
+        }
+      }
     } catch (error) {
-      console.error('Error fetching leaderboard:', error);
-      setError('Failed to load leaderboard data: ' + error.message);
+      console.error('Error fetching data:', error);
+      setError('Failed to load data: ' + error.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, user, timeframe]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData, timeframe, activeTab]);
 
   const getRankIcon = (rank) => {
     switch (rank) {
@@ -92,15 +124,87 @@ const LeaderboardPage = () => {
         >
           <div className="flex items-center justify-center mb-4">
             <Trophy className="w-8 h-8 text-yellow-500 mr-3" />
-            <h1 className="text-4xl font-bold text-gray-900">Student Leaderboard</h1>
+            <h1 className="text-4xl font-bold text-gray-900">
+              {activeTab === 'students' ? 'Student Leaderboard' : 'Active Companies'}
+            </h1>
           </div>
           <p className="text-gray-600 text-lg">
-            Compete with fellow student developers and showcase your coding skills
+            {activeTab === 'students' 
+              ? 'Compete with fellow student developers and showcase your coding skills'
+              : 'Companies creating challenges and looking for talent'
+            }
           </p>
         </motion.div>
 
+        {/* Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-xl shadow-lg p-6 mb-8"
+        >
+          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-6">
+            <button
+              onClick={() => {
+                setActiveTab('students');
+                navigate('/leaderboard');
+              }}
+              className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
+                activeTab === 'students'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <User className="w-4 h-4 mr-2" />
+              Students
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('companies');
+                navigate('/leaderboard?type=companies');
+              }}
+              className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center ${
+                activeTab === 'companies'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              Companies
+            </button>
+          </div>
+
+          {/* Timeframe Filter - only show for students */}
+          {activeTab === 'students' && (
+            <div className="flex flex-col sm:flex-row justify-between items-center">
+              <div className="flex items-center mb-4 sm:mb-0">
+                <TrendingUp className="w-5 h-5 text-purple-600 mr-2" />
+                <span className="font-medium text-gray-900">Ranking Period:</span>
+              </div>
+              <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+                {[
+                  { value: 'all', label: 'All Time' },
+                  { value: 'monthly', label: 'This Month' },
+                  { value: 'weekly', label: 'This Week' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setTimeframe(option.value)}
+                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                      timeframe === option.value
+                        ? 'bg-white text-purple-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+
         {/* Company User Message */}
-        {currentUser && currentUser.role === 'company' && (
+        {currentUser && currentUser.role === 'company' && activeTab === 'students' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -116,39 +220,6 @@ const LeaderboardPage = () => {
           </motion.div>
         )}
 
-        {/* Timeframe Filter */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-lg p-6 mb-8"
-        >
-          <div className="flex flex-col sm:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 sm:mb-0">
-              <TrendingUp className="w-5 h-5 text-purple-600 mr-2" />
-              <span className="font-medium text-gray-900">Ranking Period:</span>
-            </div>
-            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-              {[
-                { value: 'all', label: 'All Time' },
-                { value: 'monthly', label: 'This Month' },
-                { value: 'weekly', label: 'This Week' }
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setTimeframe(option.value)}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                    timeframe === option.value
-                      ? 'bg-white text-purple-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -159,6 +230,7 @@ const LeaderboardPage = () => {
           </motion.div>
         )}
 
+        
         {/* Current User Stats */}
         {currentUser && currentUser.role === 'student' && (
           <motion.div
@@ -201,8 +273,11 @@ const LeaderboardPage = () => {
           </motion.div>
         )}
 
-        {/* Top 3 Podium */}
-        {leaderboard.length >= 3 && (
+        {/* Student-specific content */}
+        {activeTab === 'students' && (
+          <>
+            {/* Top 3 Podium */}
+            {leaderboard.length >= 3 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -418,6 +493,122 @@ const LeaderboardPage = () => {
             <p className="text-gray-600">Avg Community Score</p>
           </div>
         </motion.div>
+          </>
+        )}
+
+        {/* Companies content */}
+        {activeTab === 'companies' && (
+          <>
+            {/* Companies List */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-xl shadow-lg overflow-hidden"
+            >
+              <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">Active Companies</h2>
+              </div>
+              
+              <div className="divide-y divide-gray-200">
+                {companies.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Companies Yet</h3>
+                    <p className="text-gray-600">Companies will appear here when they create challenges!</p>
+                  </div>
+                ) : (
+                  companies.map((company, index) => (
+                    <motion.div
+                      key={company._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="p-6 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                            <Building2 className="w-6 h-6 text-purple-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                              {company.name}
+                            </h3>
+                            <div className="flex items-center text-gray-500 text-sm space-x-4">
+                              <span className="flex items-center">
+                                <Trophy className="w-4 h-4 mr-1" />
+                                Active Company
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <div className="flex items-center space-x-6">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-purple-600">
+                                {company.challengeCount}
+                              </div>
+                              <p className="text-gray-500 text-sm">Challenges</p>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-xl font-semibold text-gray-900">
+                                #{company.rank}
+                              </div>
+                              <p className="text-gray-500 text-sm">Rank</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+
+            {/* Company Stats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"
+            >
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  {companies.length}
+                </div>
+                <p className="text-gray-600">Active Companies</p>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trophy className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  {companies.reduce((sum, company) => sum + (company.challengeCount || 0), 0)}
+                </div>
+                <p className="text-gray-600">Total Challenges</p>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 text-center">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900 mb-1">
+                  {companies.length > 0 
+                    ? Math.round(companies.reduce((sum, company) => sum + (company.challengeCount || 0), 0) / companies.length)
+                    : 0
+                  }
+                </div>
+                <p className="text-gray-600">Avg Challenges per Company</p>
+              </div>
+            </motion.div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -226,7 +226,6 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: [true, 'Username is required'],
-    unique: true,
     trim: true,
     minlength: 3,
     maxlength: 30
@@ -234,7 +233,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
@@ -391,8 +389,8 @@ const userSchema = new mongoose.Schema({
 });
 
 // Indexes for performance and leaderboard
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ totalPoints: -1, challengesCompleted: -1 });
 userSchema.index({ role: 1, totalPoints: -1 });
@@ -500,10 +498,22 @@ userSchema.methods.updateStats = async function () {
   }
 
   const Submission = require('./Submission');
-  const submissions = await Submission.find({ user: this._id, status: 'approved' });
+  const submissions = await Submission.find({ user: this._id, status: 'approved' })
+    .populate('challenge', 'points');
 
   this.challengesCompleted = submissions.length;
-  this.totalPoints = submissions.reduce((sum, s) => sum + (s.score || 0), 0);
+  
+  // Calculate total points properly by summing actual points earned
+  this.totalPoints = submissions.reduce((sum, submission) => {
+    if (submission.challenge && submission.challenge.points && submission.score) {
+      // Calculate points earned = (score/100) * challenge.points
+      const pointsEarned = Math.round((submission.score / 100) * submission.challenge.points);
+      return sum + pointsEarned;
+    }
+    return sum;
+  }, 0);
+  
+  // Calculate average score
   this.averageScore = submissions.length
     ? Math.round(submissions.reduce((sum, s) => sum + (s.score || 0), 0) / submissions.length)
     : 0;

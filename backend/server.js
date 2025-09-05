@@ -13,6 +13,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const adminRoutes = require('./routes/admin');
 const submissionsRoutes = require('./routes/submissions');
 const leaderboardRoutes = require('./routes/leaderboard');
+const publicRoutes = require('./routes/public');
 
 
 dotenv.config();
@@ -36,6 +37,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // API Routes
+app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/dashboard', dashboardRoutes);

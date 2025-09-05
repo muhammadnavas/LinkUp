@@ -47,15 +47,10 @@ const ProfilePage = () => {
       setLoading(true);
       setError('');
       
-      console.log('Fetching profile and submissions data...');
-      
       const [profileResponse, submissionsResponse] = await Promise.all([
         getUserProfile(),
         getUserSubmissions()
       ]);
-      
-      console.log('Profile response:', profileResponse);
-      console.log('Submissions response:', submissionsResponse);
       
       const profileData = profileResponse.data || profileResponse;
       const submissionsData = submissionsResponse.data || submissionsResponse;
@@ -72,7 +67,6 @@ const ProfilePage = () => {
             const companyChallenges = challengesResponse.data.filter(c => 
               c.companyId && String(c.companyId._id) === String(authUser.id)
             );
-            console.log('Company challenges:', companyChallenges);
             
             setCompanyStats({
               challengesCreated: companyChallenges.length,
@@ -137,17 +131,12 @@ const ProfilePage = () => {
         }
       });
       
-      console.log('Saving profile with data:', cleanedData);
-      
       const response = await updateUserProfile(cleanedData);
-      console.log('Profile update response:', response);
       
       const updatedProfile = response.data || response;
       
       setProfile(updatedProfile);
       setIsEditing(false);
-      
-      console.log('Profile update successful');
       
     } catch (error) {
       console.error('Error updating profile:', error);

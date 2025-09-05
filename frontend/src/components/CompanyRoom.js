@@ -35,8 +35,6 @@ export default function CompanyRoom() {
       if (challengesRes.success) {
         // Filter challenges created by this company (compare as strings)
         companyChallenges = challengesRes.data.filter(c => c.companyId && String(c.companyId._id) === String(user.id));
-        console.log('User ID:', user.id);
-        console.log('Filtered challenges:', companyChallenges);
         setChallenges(companyChallenges);
       }
 
@@ -91,8 +89,7 @@ export default function CompanyRoom() {
         // Refresh the data to show updated submission
         await fetchData();
         setError(null);
-        // Optional: Show success message
-        console.log('Submission reviewed successfully');
+        // Submission reviewed successfully
       } else {
         setError(result.error || 'Failed to review submission');
       }

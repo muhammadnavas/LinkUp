@@ -2,20 +2,23 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // Components
-import CompanyRoom from './CompanyRoom';
 import LoginForm from './LoginForm';
 import ProtectedRoute from './ProtectedRoute';
 import RegisterForm from './RegisterForm';
 import RoleSwitcher from './RoleSwitcher';
-import StudentRoom from './StudentRoom';
 
 // Pages
 import ChallengePage from '../pages/ChallengePage';
+import ChallengesManagePage from '../pages/ChallengesManagePage';
+import ChallengesPage from '../pages/ChallengesPage';
+import CompanyDashboard from '../pages/CompanyDashboard';
+import CompanySubmissionsPage from '../pages/CompanySubmissionsPage';
 import CreateChallengePage from '../pages/CreateChallengePage';
 import EditChallengePage from '../pages/EditChallengePage';
 import Home from '../pages/Home';
 import LeaderboardPage from '../pages/LeaderboardPage';
 import ProfilePage from '../pages/ProfilePage';
+import StudentDashboard from '../pages/StudentDashboard';
 import SubmissionsPage from '../pages/SubmissionsPage';
 import SubmissionsReviewPage from '../pages/SubmissionsReviewPage';
 
@@ -93,46 +96,25 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
         } 
       />
 
-      {/* Role-specific Main Routes */}
+      {/* Student Routes */}
       <Route
         path="/student"
         element={
           <ProtectedRoute requiredRole="student">
-            <StudentRoom />
+            <StudentDashboard />
           </ProtectedRoute>
         }
       />
       
       <Route
-        path="/company"
-        element={
-          <ProtectedRoute requiredRole="company">
-            <CompanyRoom />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Challenge Routes */}
-      <Route
-        path="/challenge/:id"
+        path="/challenges"
         element={
           <ProtectedRoute>
-            <ChallengePage />
+            <ChallengesPage />
           </ProtectedRoute>
         }
       />
 
-      {/* Dashboard Route - redirects to role-specific rooms */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardRoute />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Student-specific Routes */}
       <Route
         path="/submissions"
         element={
@@ -143,25 +125,38 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
       />
 
       <Route
-        path="/leaderboard"
+        path="/review-submissions"
         element={
-          <ProtectedRoute>
-            <LeaderboardPage />
+          <ProtectedRoute requiredRole="company">
+            <CompanySubmissionsPage />
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/profile"
+        path="/leaderboard"
+        element={<LeaderboardPage />}
+      />
+
+      {/* Company Routes */}
+      <Route
+        path="/company"
         element={
-          <ProtectedRoute>
-            <ProfilePage />
+          <ProtectedRoute requiredRole="company">
+            <CompanyDashboard />
           </ProtectedRoute>
         }
       />
 
+      <Route
+        path="/manage-challenges"
+        element={
+          <ProtectedRoute requiredRole="company">
+            <ChallengesManagePage />
+          </ProtectedRoute>
+        }
+      />
 
-// Company-specific routes
       <Route
         path="/create-challenge"
         element={
@@ -180,11 +175,12 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
         }
       />
 
+      {/* Challenge Routes */}
       <Route
-        path="/challenges/:challengeId/submissions"
+        path="/challenge/:id"
         element={
-          <ProtectedRoute requiredRole="company">
-            <SubmissionsPage />
+          <ProtectedRoute>
+            <ChallengePage />
           </ProtectedRoute>
         }
       />
@@ -194,6 +190,26 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
         element={
           <ProtectedRoute requiredRole="company">
             <SubmissionsReviewPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Common Routes */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Dashboard Route - redirects to role-specific dashboards */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardRoute />
           </ProtectedRoute>
         }
       />

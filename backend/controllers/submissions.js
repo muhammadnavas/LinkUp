@@ -68,24 +68,11 @@ const reviewSubmission = async (req, res) => {
     if (status === 'approved') {
       const studentUser = await User.findById(submission.user._id);
       if (studentUser) {
-        // Calculate points based on score and challenge difficulty
+        // Calculate points based on score and challenge difficulty for activity log
         const pointsEarned = Math.round((score / 100) * submission.challenge.points);
         
-        // Update user stats
-        studentUser.totalPoints += pointsEarned;
-        studentUser.challengesCompleted += 1;
-        
-        // Recalculate average score
-        const userSubmissions = await Submission.find({ 
-          user: studentUser._id, 
-          status: 'approved',
-          score: { $ne: null }
-        });
-        
-        const totalScore = userSubmissions.reduce((sum, s) => sum + (s.score || 0), 0);
-        studentUser.averageScore = Math.round(totalScore / userSubmissions.length);
-        
-        await studentUser.save();
+        // Update user stats using the model method to ensure consistency
+        await studentUser.updateStats();
         
         // Create activity record
         try {

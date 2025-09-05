@@ -57,6 +57,12 @@ const SubmissionsReviewPage = () => {
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     
+    // Check if submission has already been reviewed
+    if (submission.status === 'approved' || submission.status === 'rejected') {
+      setError('This submission has already been reviewed and cannot be changed.');
+      return;
+    }
+    
     if (!reviewData.status) {
       setError('Please select a review status');
       return;
@@ -82,9 +88,9 @@ const SubmissionsReviewPage = () => {
       
       setSubmission(updatedSubmission);
       
-      // Navigate back to submissions list or show success message
+      // Navigate back to submissions list after successful review
       setTimeout(() => {
-        navigate(`/challenges/${submission.challenge._id}/submissions`);
+        navigate('/review-submissions');
       }, 1500);
       
     } catch (error) {
@@ -301,105 +307,151 @@ const SubmissionsReviewPage = () => {
               animate={{ opacity: 1, x: 0 }}
               className="bg-white rounded-xl shadow-lg p-6 sticky top-8"
             >
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Review Submission</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">
+                {submission.status === 'approved' || submission.status === 'rejected' 
+                  ? 'Review Details' 
+                  : 'Review Submission'
+                }
+              </h3>
               
-              <form onSubmit={handleReviewSubmit}>
-                {/* Status Selection */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Review Status *
-                  </label>
-                  <div className="space-y-2">
-                    {[
-                      { value: 'reviewing', label: 'Under Review', icon: Clock, color: 'blue' },
-                      { value: 'approved', label: 'Approved', icon: CheckCircle, color: 'green' },
-                      { value: 'rejected', label: 'Rejected', icon: XCircle, color: 'red' }
-                    ].map((option) => (
-                      <label
-                        key={option.value}
-                        className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
-                          reviewData.status === option.value
-                            ? `border-${option.color}-500 bg-${option.color}-50`
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="status"
-                          value={option.value}
-                          checked={reviewData.status === option.value}
-                          onChange={(e) => setReviewData({ ...reviewData, status: e.target.value })}
-                          className="sr-only"
-                        />
-                        <option.icon className={`w-5 h-5 mr-3 ${
-                          reviewData.status === option.value ? `text-${option.color}-600` : 'text-gray-400'
-                        }`} />
-                        <span className={`font-medium ${
-                          reviewData.status === option.value ? `text-${option.color}-900` : 'text-gray-700'
-                        }`}>
-                          {option.label}
-                        </span>
-                      </label>
-                    ))}
+              {/* Show read-only view for already reviewed submissions */}
+              {submission.status === 'approved' || submission.status === 'rejected' ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-2">Review Status</h4>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize ${getStatusColor(submission.status)}`}>
+                      {submission.status === 'approved' && <CheckCircle className="w-4 h-4 mr-1" />}
+                      {submission.status === 'rejected' && <XCircle className="w-4 h-4 mr-1" />}
+                      {submission.status}
+                    </span>
+                  </div>
+                  
+                  {submission.score && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Score</h4>
+                      <div className="flex items-center">
+                        <Star className="w-5 h-5 text-yellow-500 mr-2" />
+                        <span className="text-lg font-bold">{submission.score}/100</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {submission.feedback && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Feedback</h4>
+                      <p className="text-gray-700">{submission.feedback}</p>
+                    </div>
+                  )}
+                  
+                  <div className="pt-4 border-t border-gray-200">
+                    <Link
+                      to="/review-submissions"
+                      className="w-full flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Submissions
+                    </Link>
                   </div>
                 </div>
-
-                {/* Score Input (only for approved) */}
-                {reviewData.status === 'approved' && (
+              ) : (
+                <form onSubmit={handleReviewSubmit}>
+                  {/* Status Selection */}
                   <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Score (0-100) *
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Review Status *
                     </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={reviewData.score}
-                        onChange={(e) => setReviewData({ ...reviewData, score: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="Enter score..."
-                        required
-                      />
-                      <Star className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
+                    <div className="space-y-2">
+                      {[
+                        { value: 'reviewing', label: 'Under Review', icon: Clock, color: 'blue' },
+                        { value: 'approved', label: 'Approved', icon: CheckCircle, color: 'green' },
+                        { value: 'rejected', label: 'Rejected', icon: XCircle, color: 'red' }
+                      ].map((option) => (
+                        <label
+                          key={option.value}
+                          className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${
+                            reviewData.status === option.value
+                              ? `border-${option.color}-500 bg-${option.color}-50`
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="status"
+                            value={option.value}
+                            checked={reviewData.status === option.value}
+                            onChange={(e) => setReviewData({ ...reviewData, status: e.target.value })}
+                            className="sr-only"
+                          />
+                          <option.icon className={`w-5 h-5 mr-3 ${
+                            reviewData.status === option.value ? `text-${option.color}-600` : 'text-gray-400'
+                          }`} />
+                          <span className={`font-medium ${
+                            reviewData.status === option.value ? `text-${option.color}-900` : 'text-gray-700'
+                          }`}>
+                            {option.label}
+                          </span>
+                        </label>
+                      ))}
                     </div>
                   </div>
-                )}
 
-                {/* Feedback */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Feedback {reviewData.status === 'rejected' ? '*' : '(Optional)'}
-                  </label>
-                  <textarea
-                    value={reviewData.feedback}
-                    onChange={(e) => setReviewData({ ...reviewData, feedback: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                    placeholder="Provide feedback to the student..."
-                    required={reviewData.status === 'rejected'}
-                  />
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={reviewing || !reviewData.status}
-                  className="w-full flex items-center justify-center px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {reviewing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Submitting Review...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Submit Review
-                    </>
+                  {/* Score Input (only for approved) */}
+                  {reviewData.status === 'approved' && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Score (0-100) *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={reviewData.score}
+                          onChange={(e) => setReviewData({ ...reviewData, score: e.target.value })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          placeholder="Enter score..."
+                          required
+                        />
+                        <Star className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
+                      </div>
+                    </div>
                   )}
-                </button>
-              </form>
+
+                  {/* Feedback */}
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Feedback {reviewData.status === 'rejected' ? '*' : '(Optional)'}
+                    </label>
+                    <textarea
+                      value={reviewData.feedback}
+                      onChange={(e) => setReviewData({ ...reviewData, feedback: e.target.value })}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                      placeholder="Provide feedback to the student..."
+                      required={reviewData.status === 'rejected'}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={reviewing || !reviewData.status}
+                    className="w-full flex items-center justify-center px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {reviewing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting Review...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Submit Review
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
 
               {/* Previous Review Info */}
               {submission.reviewedAt && (

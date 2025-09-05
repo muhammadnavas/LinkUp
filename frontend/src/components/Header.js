@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -48,6 +47,14 @@ const Header = () => {
                         isActive('/student') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-gray-700'
                       }`}
                     >
+                      Dashboard
+                    </Link>
+                    <Link 
+                      to="/challenges" 
+                      className={`font-medium transition-colors hover:text-blue-600 ${
+                        isActive('/challenges') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-gray-700'
+                      }`}
+                    >
                       Challenges
                     </Link>
                     <Link 
@@ -81,6 +88,14 @@ const Header = () => {
                       Dashboard
                     </Link>
                     <Link 
+                      to="/manage-challenges" 
+                      className={`font-medium transition-colors hover:text-blue-600 ${
+                        isActive('/manage-challenges') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-gray-700'
+                      }`}
+                    >
+                      My Challenges
+                    </Link>
+                    <Link 
                       to="/create-challenge" 
                       className={`font-medium transition-colors hover:text-blue-600 ${
                         isActive('/create-challenge') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-gray-700'
@@ -89,9 +104,9 @@ const Header = () => {
                       Create Challenge
                     </Link>
                     <Link 
-                      to="/submissions-review" 
+                      to="/review-submissions" 
                       className={`font-medium transition-colors hover:text-blue-600 ${
-                        isActive('/submissions-review') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-gray-700'
+                        isActive('/review-submissions') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-gray-700'
                       }`}
                     >
                       Review Submissions
@@ -110,6 +125,14 @@ const Header = () => {
               </>
             ) : (
               <>
+                <Link 
+                  to="/leaderboard" 
+                  className={`font-medium transition-colors hover:text-blue-600 ${
+                    isActive('/leaderboard') ? 'text-blue-600 border-b-2 border-blue-600 pb-1' : 'text-gray-700'
+                  }`}
+                >
+                  Leaderboard
+                </Link>
                 <Link 
                   to="/auth" 
                   className={`font-medium transition-colors hover:text-blue-600 ${
@@ -173,10 +196,13 @@ const Header = () => {
                   to={user.role === 'student' ? '/student' : '/company'} 
                   className="block text-gray-700 hover:text-blue-600 font-medium"
                 >
-                  {user.role === 'student' ? 'Challenges' : 'Dashboard'}
+                  Dashboard
                 </Link>
                 {user.role === 'student' && (
                   <>
+                    <Link to="/challenges" className="block text-gray-700 hover:text-blue-600 font-medium">
+                      Challenges
+                    </Link>
                     <Link to="/submissions" className="block text-gray-700 hover:text-blue-600 font-medium">
                       My Submissions
                     </Link>
@@ -187,10 +213,13 @@ const Header = () => {
                 )}
                 {user.role === 'company' && (
                   <>
+                    <Link to="/manage-challenges" className="block text-gray-700 hover:text-blue-600 font-medium">
+                      My Challenges
+                    </Link>
                     <Link to="/create-challenge" className="block text-gray-700 hover:text-blue-600 font-medium">
                       Create Challenge
                     </Link>
-                    <Link to="/submissions-review" className="block text-gray-700 hover:text-blue-600 font-medium">
+                    <Link to="/review-submissions" className="block text-gray-700 hover:text-blue-600 font-medium">
                       Review Submissions
                     </Link>
                   </>
@@ -211,6 +240,9 @@ const Header = () => {
               </>
             ) : (
               <>
+                <Link to="/leaderboard" className="block text-gray-700 hover:text-blue-600 font-medium">
+                  Leaderboard
+                </Link>
                 <Link to="/auth" className="block text-gray-700 hover:text-blue-600 font-medium">
                   Login
                 </Link>

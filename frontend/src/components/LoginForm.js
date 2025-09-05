@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const LoginForm = ({ role }) => {
@@ -96,9 +96,9 @@ const LoginForm = ({ role }) => {
       </form>
 
       <div className="mt-4 text-center">
-        <a href="#" className="text-sm text-blue-600 hover:underline">
+        <button type="button" className="text-sm text-blue-600 hover:underline bg-transparent border-none cursor-pointer">
           Forgot your password?
-        </a>
+        </button>
       </div>
     </div>
   );

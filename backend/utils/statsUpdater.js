@@ -38,7 +38,6 @@ const updateAllUserStats = async () => {
       }
     }
     
-    console.log(`Updated stats for ${updatedCount}/${users.length} users`);
     return updatedCount;
   } catch (error) {
     console.error('Error updating all user stats:', error);
@@ -199,11 +198,6 @@ const recalculateLeaderboard = async () => {
     const users = await User.find({ isActive: true })
       .sort({ totalPoints: -1, challengesCompleted: -1, averageScore: -1 })
       .select('_id username totalPoints challengesCompleted averageScore');
-    
-    console.log('Leaderboard recalculated. Top 10:');
-    users.slice(0, 10).forEach((user, index) => {
-      console.log(`${index + 1}. ${user.username} - ${user.totalPoints} points`);
-    });
     
     return users;
   } catch (error) {

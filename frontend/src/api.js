@@ -24,7 +24,6 @@ const handleResponse = async (response) => {
     throw new Error(errorData.message || errorData.error || `HTTP error! status: ${response.status}`);
   }
   const data = await response.json();
-  console.log('API Success Response:', data);
   return data;
 };
 
@@ -142,7 +141,6 @@ export const getUserProfile = async () => {
 
 // Update current user's profile
 export const updateUserProfile = async (profileData) => {
-  console.log('Sending profile update request:', profileData);
   const res = await fetch(`${API_BASE_URL}/auth/profile`, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -157,5 +155,26 @@ export const getLeaderboard = async (timeframe = 'all') => {
     ? `${API_BASE_URL}/auth/leaderboard?timeframe=${encodeURIComponent(timeframe)}`
     : `${API_BASE_URL}/auth/leaderboard`;
   const res = await fetch(url, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
+
+// Get public leaderboard (no auth required)
+export const getPublicLeaderboard = async (timeframe = 'all', limit = 10) => {
+  const url = `${API_BASE_URL}/public/leaderboard?timeframe=${encodeURIComponent(timeframe)}&limit=${limit}`;
+  const res = await fetch(url, { 
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  return handleResponse(res);
+};
+
+// Get public statistics
+export const getPublicStats = async () => {
+  const res = await fetch(`${API_BASE_URL}/public/stats`, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
   return handleResponse(res);
 };

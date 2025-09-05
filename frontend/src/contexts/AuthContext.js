@@ -42,7 +42,6 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         const result = await response.json();
-        console.log('Auth verify response:', result);
         if (result.success && result.data) {
           setUser(result.data);
         } else {

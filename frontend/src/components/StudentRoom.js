@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getChallenges } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function StudentRoom() {
@@ -7,6 +8,12 @@ export default function StudentRoom() {
   const { user } = useAuth();
   
   const [challenges, setChallenges] = useState([]);
+  const [filteredChallenges, setFilteredChallenges] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [filters, setFilters] = useState({
+    difficulty: '',
+    company: ''
+  });
   const [stats, setStats] = useState({
     totalChallenges: 0,
     completedChallenges: 0,
@@ -23,20 +30,20 @@ export default function StudentRoom() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    // Apply filters whenever challenges or filters change
+    applyFilters();
+  }, [challenges, filters]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
       
-      // Fetch challenges
-      const challengesRes = await fetch('http://localhost:5000/api/challenges', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Fetch challenges using the API helper
+      const challengesRes = await getChallenges();
       
       // Fetch dashboard stats
+      const token = localStorage.getItem('token');
       const statsRes = await fetch('http://localhost:5000/api/dashboard/student-stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -44,13 +51,15 @@ export default function StudentRoom() {
         }
       });
 
-      if (challengesRes.ok && statsRes.ok) {
-        const challengesData = await challengesRes.json();
+      if (challengesRes.success && statsRes.ok) {
+        const challengesData = challengesRes.data || challengesRes;
         const statsData = await statsRes.json();
         
-        if (challengesData.success) {
-          setChallenges(challengesData.data || []);
-        }
+        setChallenges(challengesData);
+        
+        // Extract unique companies for filter dropdown
+        const uniqueCompanies = [...new Set(challengesData.map(c => c.company))];
+        setCompanies(uniqueCompanies);
         
         if (statsData.success) {
           setStats(statsData.data);
@@ -64,6 +73,27 @@ export default function StudentRoom() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...challenges];
+    
+    if (filters.difficulty && filters.difficulty !== '') {
+      filtered = filtered.filter(challenge => challenge.difficulty === filters.difficulty);
+    }
+    
+    if (filters.company && filters.company !== '') {
+      filtered = filtered.filter(challenge => challenge.company === filters.company);
+    }
+    
+    setFilteredChallenges(filtered);
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
   };
 
   const handleChallengeClick = (challengeId) => {
@@ -329,21 +359,32 @@ export default function StudentRoom() {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-800">Available Challenges</h2>
               <div className="flex space-x-2">
-                <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                  <option>All Difficulties</option>
-                  <option>Easy</option>
-                  <option>Medium</option>
-                  <option>Hard</option>
+                <select 
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  value={filters.difficulty}
+                  onChange={(e) => handleFilterChange('difficulty', e.target.value)}
+                >
+                  <option value="">All Difficulties</option>
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
                 </select>
-                <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                  <option>All Companies</option>
+                <select 
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  value={filters.company}
+                  onChange={(e) => handleFilterChange('company', e.target.value)}
+                >
+                  <option value="">All Companies</option>
+                  {companies.map((company, index) => (
+                    <option key={index} value={company}>{company}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
             <div className="grid gap-6">
-              {challenges.length > 0 ? (
-                challenges.map((challenge) => (
+              {filteredChallenges.length > 0 ? (
+                filteredChallenges.map((challenge) => (
                   <div key={challenge._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
@@ -365,7 +406,6 @@ export default function StudentRoom() {
                     
                     <div className="flex justify-between items-center">
                       <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span>⏱️ {challenge.timeLimit} minutes</span>
                         <span>📅 Due: {new Date(challenge.deadline).toLocaleDateString()}</span>
                       </div>
                       <button
@@ -392,8 +432,23 @@ export default function StudentRoom() {
                   <svg className="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                   </svg>
-                  <h3 className="text-lg font-medium text-gray-800 mb-2">No Challenges Available</h3>
-                  <p className="text-gray-600">Check back later for new coding challenges!</p>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">
+                    {challenges.length === 0 ? 'No Challenges Available' : 'No Challenges Match Your Filters'}
+                  </h3>
+                  <p className="text-gray-600">
+                    {challenges.length === 0 
+                      ? 'Check back later for new coding challenges!' 
+                      : 'Try adjusting your filters to see more challenges.'
+                    }
+                  </p>
+                  {filteredChallenges.length === 0 && challenges.length > 0 && (
+                    <button
+                      onClick={() => setFilters({ difficulty: '', company: '' })}
+                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    >
+                      Clear Filters
+                    </button>
+                  )}
                 </div>
               )}
             </div>
