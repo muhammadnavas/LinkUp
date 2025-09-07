@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { BrowserRouter as Router } from "react-router-dom";
 import "./App.css";
 import "./index.css";
-import { BrowserRouter as Router } from "react-router-dom";
 
 // Context
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Components
-import Header from "./components/Header";
 import AppRoutes from "./components/AppRoutes";
+import Header from "./components/Header";
 
 // Main App Component
 function App() {
