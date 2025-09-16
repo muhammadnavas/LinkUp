@@ -1,7 +1,7 @@
 // src/pages/SubmissionsReviewPage.js - Complete implementation
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, CheckCircle, Clock, ExternalLink, FileText, Save, Star, User, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getSubmissionForReview, reviewSubmission } from '../api';
 
@@ -18,11 +18,7 @@ const SubmissionsReviewPage = () => {
     feedback: ''
   });
 
-  useEffect(() => {
-    fetchSubmission();
-  }, [submissionId]);
-
-  const fetchSubmission = async () => {
+  const fetchSubmission = useCallback(async () => {
     try {
       setLoading(true);
       if (!submissionId) {
@@ -52,7 +48,11 @@ const SubmissionsReviewPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [submissionId]);
+
+  useEffect(() => {
+    fetchSubmission();
+  }, [fetchSubmission]);
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getChallenges } from '../api';
 
@@ -20,9 +20,8 @@ export default function ChallengesPage() {
   }, []);
 
   useEffect(() => {
-    // Apply filters whenever challenges or filters change
-    applyFilters();
-  }, [challenges, filters]);
+    fetchChallenges();
+  }, []);
 
   const fetchChallenges = async () => {
     try {
@@ -34,7 +33,7 @@ export default function ChallengesPage() {
         setChallenges(challengesData);
         
         // Extract unique companies for filter dropdown
-        const uniqueCompanies = [...new Set(challengesData.map(c => c.company))];
+        const uniqueCompanies = [...new Set(challengesData.map(c => c.company).filter(Boolean))];
         setCompanies(uniqueCompanies);
       } else {
         setError('Failed to load challenges');
@@ -47,7 +46,7 @@ export default function ChallengesPage() {
     }
   };
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...challenges];
     
     if (filters.difficulty && filters.difficulty !== '') {
@@ -59,7 +58,12 @@ export default function ChallengesPage() {
     }
     
     setFilteredChallenges(filtered);
-  };
+  }, [challenges, filters]);
+
+  useEffect(() => {
+    // Apply filters whenever challenges or filters change
+    applyFilters();
+  }, [applyFilters]);
 
   const handleFilterChange = (filterType, value) => {
     setFilters(prev => ({

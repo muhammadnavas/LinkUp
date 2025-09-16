@@ -1,7 +1,7 @@
 // src/pages/SubmissionsPage.js - Corrected version
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ExternalLink, FileText, Trophy, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getChallenge, getChallengeSubmissions, getUserSubmissions } from '../api';
 
@@ -13,11 +13,7 @@ const SubmissionsPage = () => {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
 
-  useEffect(() => {
-    fetchData();
-  }, [challengeId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
     
@@ -35,7 +31,7 @@ const SubmissionsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [challengeId]);
 
   const fetchSubmissions = async () => {
     try {
@@ -71,6 +67,10 @@ const SubmissionsPage = () => {
       console.warn('Could not fetch challenge details, but continuing...');
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filteredSubmissions = submissions.filter((submission) => {
     if (filter === 'all') return true;

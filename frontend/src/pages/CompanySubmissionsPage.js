@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ExternalLink, FileText, Star, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCompanySubmissions, reviewSubmission } from '../api';
 
@@ -16,11 +16,7 @@ const CompanySubmissionsPage = () => {
     totalSubmissions: 0
   });
 
-  useEffect(() => {
-    fetchSubmissions();
-  }, [activeTab]);
-
-  const fetchSubmissions = async (page = 1) => {
+  const fetchSubmissions = useCallback(async (page = 1) => {
     try {
       setLoading(true);
       setError('');
@@ -46,7 +42,11 @@ const CompanySubmissionsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, [fetchSubmissions]);
 
   const handleQuickReview = async (submissionId, status, score = null, feedback = '') => {
     try {

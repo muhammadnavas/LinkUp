@@ -1,5 +1,5 @@
 // src/pages/EditChallengePage.js
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getChallenge, updateChallenge } from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,14 +41,7 @@ export default function EditChallengePage() {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
 
-  // Load challenge data
-  useEffect(() => {
-    if (challengeId) {
-      fetchChallenge();
-    }
-  }, [challengeId]);
-
-  const fetchChallenge = async () => {
+  const fetchChallenge = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getChallenge(challengeId);
@@ -79,7 +72,14 @@ export default function EditChallengePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [challengeId, user.id, navigate]);
+
+  // Load challenge data
+  useEffect(() => {
+    if (challengeId) {
+      fetchChallenge();
+    }
+  }, [challengeId, fetchChallenge]);
 
   // Handle form input changes
   const handleInputChange = (e) => {

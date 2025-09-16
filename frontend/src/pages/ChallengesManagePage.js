@@ -11,10 +11,6 @@ export default function ChallengesManagePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchChallenges();
-  }, []);
-
   const fetchChallenges = async () => {
     try {
       setLoading(true);
@@ -27,15 +23,19 @@ export default function ChallengesManagePage() {
         );
         setChallenges(companyChallenges);
       } else {
-        setError('Failed to load challenges');
+        setError(challengesRes.message || 'Failed to fetch challenges');
       }
-    } catch (err) {
-      console.error('Error fetching challenges:', err);
-      setError('Failed to load challenges. Please try again.');
+    } catch (error) {
+      console.error('Fetch challenges error:', error);
+      setError('Failed to fetch challenges');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchChallenges();
+  }, [user.id]); // Added user.id as dependency since it's used in fetchChallenges
 
   const getDifficultyColor = (difficulty) => {
     switch(difficulty) {
