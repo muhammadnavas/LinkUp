@@ -1,5 +1,5 @@
 // src/pages/EditChallengePage.js
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getChallenge, updateChallenge } from '../api';
 import { useAuth } from '../contexts/AuthContext';

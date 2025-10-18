@@ -1,7 +1,7 @@
 // src/pages/SubmissionsPage.js - Corrected version
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ExternalLink, FileText, Trophy, User } from 'lucide-react';
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getChallenge, getChallengeSubmissions, getUserSubmissions } from '../api';
 
