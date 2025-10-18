@@ -2,8 +2,6 @@
 
 **LinkUp** is a platform that bridges the gap between talented students and innovative companies. Students can showcase their programming skills through coding challenges, while companies can discover and recruit top talent.
 
-![LinkUp Banner](https://via.placeholder.com/1200x400/3b82f6/ffffff?text=LinkUp+-+Connecting+Talent+with+Opportunity)
-
 ## 🌟 Features
 
 ### For Students
@@ -298,30 +296,10 @@ REACT_APP_API_URL=http://localhost:5000/api
 3. Set `REACT_APP_API_URL` environment variable
 4. Deploy!
 
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 👨‍💻 Author
 
 **Muhammad Navas**
 - GitHub: [@muhammadnavas](https://github.com/muhammadnavas)
-
-## 🙏 Acknowledgments
-
-- Thanks to all contributors who have helped with this project
-- Inspired by coding challenge platforms like LeetCode and HackerRank
-- Built with love for the developer community
 
 ## 📧 Contact
 
@@ -330,5 +308,3 @@ For any queries or suggestions, please reach out:
 - Contact the maintainer
 
 ---
-
-⭐ **Star this repository if you find it helpful!**
