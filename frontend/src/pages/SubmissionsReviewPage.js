@@ -429,7 +429,7 @@ const SubmissionsReviewPage = () => {
                           max="100"
                           value={reviewData.score}
                           onChange={(e) => setReviewData({ ...reviewData, score: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           placeholder="Enter score..."
                           required
                         />

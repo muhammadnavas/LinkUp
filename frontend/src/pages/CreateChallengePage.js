@@ -220,7 +220,7 @@ export default function CreateChallengePage() {
                   onChange={handleInputChange}
                   min="10"
                   max="1000"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                     errors.points ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
@@ -317,7 +317,7 @@ export default function CreateChallengePage() {
                   onChange={handleInputChange}
                   min="1"
                   max="10"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <p className="mt-1 text-sm text-gray-500">Number of attempts allowed per student</p>
               </div>
