@@ -499,14 +499,10 @@ userSchema.methods.updateStats = async function () {
 
   this.challengesCompleted = submissions.length;
   
-  // Calculate total points properly by summing actual points earned
+  // Calculate total points - each submission contributes its score (0-100)
   this.totalPoints = submissions.reduce((sum, submission) => {
-    if (submission.challenge && submission.challenge.points && submission.score) {
-      // Calculate points earned = (score/100) * challenge.points
-      const pointsEarned = Math.round((submission.score / 100) * submission.challenge.points);
-      return sum + pointsEarned;
-    }
-    return sum;
+    // Simply add the score (0-100) for each approved submission
+    return sum + (submission.score || 0);
   }, 0);
   
   // Calculate average score

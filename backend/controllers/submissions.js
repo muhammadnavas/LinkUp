@@ -20,11 +20,21 @@ const reviewSubmission = async (req, res) => {
       });
     }
 
-    if (status === 'approved' && (score === undefined || score < 0 || score > 100)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Score between 0-100 is required for approved submissions'
-      });
+    if (status === 'approved') {
+      if (score === undefined || score === null || score < 0 || score > 100) {
+        return res.status(400).json({
+          success: false,
+          error: 'Score between 0-100 is required for approved submissions'
+        });
+      }
+      // Ensure score is a number
+      const parsedScore = parseInt(score);
+      if (isNaN(parsedScore)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Score must be a valid number'
+        });
+      }
     }
 
     // Find the submission
@@ -57,24 +67,34 @@ const reviewSubmission = async (req, res) => {
 
     // Update submission
     submission.status = status;
-    submission.score = status === 'approved' ? score : 0;
+    submission.score = status === 'approved' ? parseInt(score) : 0;
     submission.feedback = feedback || '';
     submission.reviewedBy = user.id;
     submission.reviewedAt = new Date();
 
     await submission.save();
 
+    console.log(`Submission ${submission._id} updated: Status=${status}, Score=${submission.score}`);
+
+
     // Update user stats if approved
     if (status === 'approved') {
-      const studentUser = await User.findById(submission.user._id);
+      let studentUser = await User.findById(submission.user._id);
       if (studentUser) {
-        // Calculate points based on score and challenge difficulty for activity log
-        const pointsEarned = Math.round((score / 100) * submission.challenge.points);
-        
-        // Update user stats using the model method to ensure consistency
+        // Update all user stats by recalculating from all approved submissions
         await studentUser.updateStats();
         
-        // Create activity record
+        // Reload to get the updated values
+        studentUser = await User.findById(studentUser._id);
+        
+        // Points earned for this specific submission is just the score (0-100)
+        const pointsEarned = score;
+        
+        console.log(`Review approved: Score ${score}/100 for "${submission.challenge.title}"`);
+        console.log(`Points earned this submission: ${pointsEarned} points`);
+        console.log(`Student total points: ${studentUser.totalPoints}, Challenges completed: ${studentUser.challengesCompleted}`);
+        
+        // Create activity record with actual points earned
         try {
           const activity = new Activity({
             user: studentUser._id,
