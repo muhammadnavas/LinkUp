@@ -139,6 +139,12 @@ export const getUserProfile = async () => {
   return handleResponse(res);
 };
 
+// Get user profile by ID
+export const getUserProfileById = async (userId) => {
+  const res = await fetch(`${API_BASE_URL}/auth/profile/${userId}`, { headers: getAuthHeaders() });
+  return handleResponse(res);
+};
+
 // Update current user's profile
 export const updateUserProfile = async (profileData) => {
   const res = await fetch(`${API_BASE_URL}/auth/profile`, {

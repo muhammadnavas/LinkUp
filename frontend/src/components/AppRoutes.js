@@ -21,6 +21,7 @@ import ProfilePage from '../pages/ProfilePage';
 import StudentDashboard from '../pages/StudentDashboard';
 import SubmissionsPage from '../pages/SubmissionsPage';
 import SubmissionsReviewPage from '../pages/SubmissionsReviewPage';
+import UserProfilePage from '../pages/UserProfilePage';
 
 // Dashboard Route Handler - redirects to appropriate dashboard
 const DashboardRoute = () => {
@@ -200,6 +201,15 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
         element={
           <ProtectedRoute>
             <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile/:userId"
+        element={
+          <ProtectedRoute>
+            <UserProfilePage />
           </ProtectedRoute>
         }
       />

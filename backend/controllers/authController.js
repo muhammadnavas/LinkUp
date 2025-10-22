@@ -856,6 +856,66 @@ const changePassword = async (req, res) => {
   }
 };
 
+// @desc    Get user profile by ID
+// @route   GET /api/auth/profile/:userId
+// @access  Private
+const getUserProfileById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    // Update user stats before returning profile
+    await user.updateStats();
+
+    // Get additional data based on user role
+    let additionalData = {};
+    
+    if (user.role === 'student') {
+      // Get student's submissions
+      const submissions = await Submission.find({ user: userId, status: 'approved' })
+        .populate('challenge', 'title difficulty')
+        .sort({ submittedAt: -1 })
+        .limit(10)
+        .lean();
+      
+      additionalData.recentSubmissions = submissions;
+    } else if (user.role === 'company') {
+      // Get company's created challenges
+      const Challenge = require('../models/Challenge');
+      const challenges = await Challenge.find({ companyId: userId })
+        .select('title difficulty createdAt')
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean();
+      
+      additionalData.recentChallenges = challenges;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        ...user.getPublicProfile(),
+        ...additionalData
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error fetching user profile'
+    });
+  }
+};
+
 // @desc    Logout user
 // @route   POST /api/auth/logout
 // @access  Private
@@ -881,6 +941,7 @@ module.exports = {
   updateProfile,
   getUserSubmissions,
   getLeaderboard,
+  getUserProfileById,
   changePassword,
   logoutUser
 };

@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { Award, Building2, Calendar, Crown, Medal, Star, TrendingUp, Trophy, User } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getLeaderboard, getPublicLeaderboard, getPublicStats, getUserProfile } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -381,7 +381,12 @@ const LeaderboardPage = () => {
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                          {user.username}
+                          <Link 
+                            to={`/profile/${user._id}`}
+                            className="hover:text-purple-600 transition-colors"
+                          >
+                            {user.username}
+                          </Link>
                           {currentUser && user._id === currentUser._id && (
                             <span className="ml-2 px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
                               You
@@ -533,7 +538,12 @@ const LeaderboardPage = () => {
                           </div>
                           <div>
                             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                              {company.name}
+                              <Link 
+                                to={`/profile/${company._id}`}
+                                className="hover:text-purple-600 transition-colors"
+                              >
+                                {company.name}
+                              </Link>
                             </h3>
                             <div className="flex items-center text-gray-500 text-sm space-x-4">
                               <span className="flex items-center">

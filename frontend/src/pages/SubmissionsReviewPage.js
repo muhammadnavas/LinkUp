@@ -210,7 +210,16 @@ const SubmissionsReviewPage = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {submission.user?.username || 'Anonymous'}
+                    {submission.user?._id ? (
+                      <Link 
+                        to={`/profile/${submission.user._id}`}
+                        className="hover:text-purple-600 transition-colors"
+                      >
+                        {submission.user?.username || 'Anonymous'}
+                      </Link>
+                    ) : (
+                      submission.user?.username || 'Anonymous'
+                    )}
                   </h3>
                   <div className="flex items-center text-gray-500 text-sm">
                     <Calendar className="w-4 h-4 mr-1" />

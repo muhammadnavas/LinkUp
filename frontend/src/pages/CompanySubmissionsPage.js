@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ExternalLink, FileText, Star, User } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getCompanySubmissions, reviewSubmission } from '../api';
 
 const CompanySubmissionsPage = () => {
@@ -181,7 +181,16 @@ const CompanySubmissionsPage = () => {
                       <div className="flex items-center space-x-6 text-sm text-gray-600 mb-3">
                         <div className="flex items-center space-x-1">
                           <User className="w-4 h-4" />
-                          <span className="font-medium">{submission.user?.username || 'Unknown Student'}</span>
+                          {submission.user?._id ? (
+                            <Link 
+                              to={`/profile/${submission.user._id}`}
+                              className="font-medium hover:text-purple-600 transition-colors"
+                            >
+                              {submission.user?.username || 'Unknown Student'}
+                            </Link>
+                          ) : (
+                            <span className="font-medium">{submission.user?.username || 'Unknown Student'}</span>
+                          )}
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-4 h-4" />

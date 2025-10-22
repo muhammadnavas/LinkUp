@@ -175,6 +175,7 @@ const {
   updateProfile,
   getUserSubmissions,
   getLeaderboard,
+  getUserProfileById,
   changePassword,
   logoutUser
 } = require('../controllers/authController');
@@ -287,9 +288,10 @@ const profileUpdateValidation = [
 router.post('/register', registerValidation, registerUser);
 router.post('/login', loginValidation, loginUser);
 router.get('/me', protect, getCurrentUser);
-router.put('/profile', protect, profileUpdateValidation, updateProfile);
 router.get('/submissions', protect, getUserSubmissions);
 router.get('/leaderboard', protect, getLeaderboard);
+router.get('/profile/:userId', protect, getUserProfileById); // Must come before PUT /profile
+router.put('/profile', protect, profileUpdateValidation, updateProfile);
 router.put('/change-password', protect, changePassword);
 router.post('/logout', protect, logoutUser);
 
