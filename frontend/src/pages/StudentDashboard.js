@@ -18,12 +18,24 @@ export default function StudentDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Redirect if user is not a student
+    if (user && user.role !== 'student') {
+      navigate('/company');
+      return;
+    }
     fetchDashboardData();
-  }, []);
+  }, [user, navigate]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      
+      // Check if user is actually a student before fetching student data
+      if (!user || user.role !== 'student') {
+        setError('Access denied. Please log in as a student.');
+        setLoading(false);
+        return;
+      }
       
       const token = localStorage.getItem('token');
       const statsRes = await fetch('http://localhost:5000/api/dashboard/student-stats', {

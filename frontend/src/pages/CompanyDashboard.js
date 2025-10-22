@@ -20,6 +20,13 @@ export default function CompanyDashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Check if user is actually a company before fetching company data
+      if (!user || user.role !== 'company') {
+        setError('Access denied. Please log in as a company.');
+        setLoading(false);
+        return;
+      }
 
       // Fetch company's challenges
       const challengesRes = await getChallenges();
@@ -60,8 +67,13 @@ export default function CompanyDashboard() {
   }, [user.id]);
 
   useEffect(() => {
+    // Redirect if user is not a company
+    if (user && user.role !== 'company') {
+      navigate('/student');
+      return;
+    }
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, user, navigate]);
 
   const getStatusBadge = (status) => {
     const statusStyles = {
