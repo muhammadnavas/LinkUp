@@ -426,7 +426,6 @@ const registerUser = async (req, res) => {
 
     const {
       name,
-      username,
       email,
       password,
       role,
@@ -449,13 +448,15 @@ const registerUser = async (req, res) => {
       });
     }
 
+    // Generate username from email if not provided
+    let username = req.body.username || email.split('@')[0];
+
     // Check if username already exists
     const existingUsername = await User.findByUsername(username);
     if (existingUsername) {
-      return res.status(400).json({
-        success: false,
-        error: 'Username already taken'
-      });
+      // Add random number to username if taken
+      const randomNum = Math.floor(Math.random() * 1000);
+      username = `${email.split('@')[0]}${randomNum}`;
     }
 
     let userData = {
@@ -467,13 +468,13 @@ const registerUser = async (req, res) => {
     };
 
     if (role === 'student') {
-      userData = {
-        ...userData,
-        university,
-        major,
-        graduationYear: parseInt(graduationYear),
-        skills: skills || []
-      };
+      // Only add student fields if they have values
+      if (university && university.trim()) userData.university = university.trim();
+      if (major && major.trim()) userData.major = major.trim();
+      if (graduationYear && !isNaN(parseInt(graduationYear))) {
+        userData.graduationYear = parseInt(graduationYear);
+      }
+      userData.skills = skills || [];
     } else if (role === 'company') {
       userData = {
         ...userData,

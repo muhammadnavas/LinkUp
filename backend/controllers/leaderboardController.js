@@ -9,7 +9,7 @@ const getDetailedLeaderboard = async (req, res) => {
   try {
     const { 
       timeframe = 'all', 
-      limit = 100, 
+      limit = 500, 
       role,
       minChallenges = 0 
     } = req.query;

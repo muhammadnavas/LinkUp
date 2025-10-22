@@ -42,17 +42,20 @@ const RegisterForm = ({ role }) => {
       setError('Password must be at least 6 characters long');
       return false;
     }
-    if (formData.username.length < 3) {
-      setError('Username must be at least 3 characters long');
-      return false;
-    }
-    if (formData.username.length > 30) {
-      setError('Username cannot exceed 30 characters');
-      return false;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      setError('Username can only contain letters, numbers, and underscores');
-      return false;
+    // Username validation - only if provided
+    if (formData.username && formData.username.length > 0) {
+      if (formData.username.length < 3) {
+        setError('Username must be at least 3 characters long');
+        return false;
+      }
+      if (formData.username.length > 30) {
+        setError('Username cannot exceed 30 characters');
+        return false;
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+        setError('Username can only contain letters, numbers, and underscores');
+        return false;
+      }
     }
     return true;
   };
@@ -69,17 +72,27 @@ const RegisterForm = ({ role }) => {
       // Prepare data for backend
       const registrationData = {
         name: formData.name,
-        username: formData.username,
         email: formData.email,
         password: formData.password,
         role: role
       };
 
+      // Add username if provided
+      if (formData.username && formData.username.trim()) {
+        registrationData.username = formData.username.trim();
+      }
+
       // Add role-specific fields
       if (role === 'student') {
-        registrationData.university = formData.university;
-        registrationData.major = formData.major;
-        registrationData.graduationYear = formData.graduationYear;
+        if (formData.university && formData.university.trim()) {
+          registrationData.university = formData.university.trim();
+        }
+        if (formData.major && formData.major.trim()) {
+          registrationData.major = formData.major.trim();
+        }
+        if (formData.graduationYear && formData.graduationYear.toString().trim()) {
+          registrationData.graduationYear = parseInt(formData.graduationYear);
+        }
       } else {
         registrationData.companyName = formData.companyName;
         registrationData.industry = formData.industry;
@@ -132,7 +145,7 @@ const RegisterForm = ({ role }) => {
 
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-            Username
+            Username <span className="text-gray-500 text-xs">(Optional - auto-generated from email if not provided)</span>
           </label>
           <input
             type="text"
@@ -140,7 +153,6 @@ const RegisterForm = ({ role }) => {
             name="username"
             value={formData.username}
             onChange={handleChange}
-            required
             minLength={3}
             maxLength={30}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -204,57 +216,60 @@ const RegisterForm = ({ role }) => {
         {/* Role-specific Fields */}
         {role === 'student' ? (
           <>
-            <div>
-              <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">
-                University
-              </label>
-              <input
-                type="text"
-                id="university"
-                name="university"
-                value={formData.university}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Your university"
-                disabled={loading}
-              />
-            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm text-gray-600 mb-3">
+                <span className="font-semibold">Student Information</span> <span className="text-gray-500">(Optional - can be added later)</span>
+              </p>
+              
+              <div className="mb-4">
+                <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-1">
+                  University <span className="text-gray-500 text-xs">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="university"
+                  name="university"
+                  value={formData.university}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Your university"
+                  disabled={loading}
+                />
+              </div>
 
-            <div>
-              <label htmlFor="major" className="block text-sm font-medium text-gray-700 mb-1">
-                Major
-              </label>
-              <input
-                type="text"
-                id="major"
-                name="major"
-                value={formData.major}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Your major/field of study"
-                disabled={loading}
-              />
-            </div>
+              <div className="mb-4">
+                <label htmlFor="major" className="block text-sm font-medium text-gray-700 mb-1">
+                  Major <span className="text-gray-500 text-xs">(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="major"
+                  name="major"
+                  value={formData.major}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Your major/field of study"
+                  disabled={loading}
+                />
+              </div>
 
-            <div>
-              <label htmlFor="graduationYear" className="block text-sm font-medium text-gray-700 mb-1">
-                Graduation Year
-              </label>
-              <input
-                type="number"
-                id="graduationYear"
-                name="graduationYear"
-                value={formData.graduationYear}
-                onChange={handleChange}
-                required
-                min="2024"
-                max="2030"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="2025"
-                disabled={loading}
-              />
+              <div>
+                <label htmlFor="graduationYear" className="block text-sm font-medium text-gray-700 mb-1">
+                  Graduation Year <span className="text-gray-500 text-xs">(Optional)</span>
+                </label>
+                <input
+                  type="number"
+                  id="graduationYear"
+                  name="graduationYear"
+                  value={formData.graduationYear}
+                  onChange={handleChange}
+                  min="2024"
+                  max="2035"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="2025"
+                  disabled={loading}
+                />
+              </div>
             </div>
           </>
         ) : (

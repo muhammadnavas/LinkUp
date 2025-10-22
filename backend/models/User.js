@@ -225,10 +225,13 @@ const userSchema = new mongoose.Schema({
   },
   username: {
     type: String,
-    required: [true, 'Username is required'],
     trim: true,
     minlength: 3,
-    maxlength: 30
+    maxlength: 30,
+    default: function() {
+      // Generate username from email if not provided
+      return this.email ? this.email.split('@')[0] : '';
+    }
   },
   email: {
     type: String,
@@ -250,28 +253,21 @@ const userSchema = new mongoose.Schema({
     lowercase: true
   },
   
-  // Student-specific fields
+  // Student-specific fields (optional)
   university: {
     type: String,
-    required: function() {
-      return this.role === 'student';
-    },
-    trim: true
+    trim: true,
+    default: ''
   },
   major: {
     type: String,
-    required: function() {
-      return this.role === 'student';
-    },
-    trim: true
+    trim: true,
+    default: ''
   },
   graduationYear: {
     type: Number,
-    required: function() {
-      return this.role === 'student';
-    },
     min: [2024, 'Graduation year must be 2024 or later'],
-    max: [2030, 'Graduation year cannot exceed 2030']
+    max: [2035, 'Graduation year cannot exceed 2035']
   },
   skills: [{
     type: String,
@@ -390,7 +386,7 @@ const userSchema = new mongoose.Schema({
 
 // Indexes for performance and leaderboard
 userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ username: 1 }, { unique: true });
+userSchema.index({ username: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ totalPoints: -1, challengesCompleted: -1 });
 userSchema.index({ role: 1, totalPoints: -1 });

@@ -48,7 +48,7 @@ const challengeSchema = new mongoose.Schema({
   },
   submissionFormat: {
     type: String,
-    enum: ['code', 'text', 'file', 'github'],
+    enum: ['github'],
     default: 'github'
   },
   isActive: {
