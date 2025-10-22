@@ -253,21 +253,13 @@ const CompanySubmissionsPage = () => {
                     </button>
                     
                     {submission.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => handleQuickReview(submission._id, 'reviewing')}
-                          className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition text-sm font-medium"
-                        >
-                          <Clock className="w-4 h-4 inline mr-1" />
-                          Start Review
-                        </button>
-                        <button
-                          onClick={() => handleQuickReview(submission._id, 'approved', 85, 'Good solution!')}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm font-medium"
-                        >
-                          Quick Approve
-                        </button>
-                      </>
+                      <button
+                        onClick={() => handleQuickReview(submission._id, 'reviewing')}
+                        className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition text-sm font-medium"
+                      >
+                        <Clock className="w-4 h-4 inline mr-1" />
+                        Start Review
+                      </button>
                     )}
                     
                     {submission.status === 'reviewing' && (

@@ -1,7 +1,7 @@
 // src/pages/ChallengePage.js
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getChallenge, submitSolution } from "../api";
+import { getChallenge, getUserSubmissions, submitSolution } from "../api";
 import { useAuth } from '../contexts/AuthContext';
 
 export default function ChallengePage() {
@@ -19,6 +19,7 @@ export default function ChallengePage() {
   const [submitError, setSubmitError] = useState("");
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [existingSubmission, setExistingSubmission] = useState(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -52,6 +53,21 @@ export default function ChallengePage() {
         }
 
         setChallenge(res.data);
+        
+        // Check if user already submitted for this challenge
+        try {
+          const submissionsRes = await getUserSubmissions();
+          if (submissionsRes.success) {
+            const userSubmission = submissionsRes.data.find(
+              sub => sub.challenge._id === id || sub.challenge === id
+            );
+            if (userSubmission) {
+              setExistingSubmission(userSubmission);
+            }
+          }
+        } catch (submissionErr) {
+          console.error("Error checking submissions:", submissionErr);
+        }
         
         // Start countdown timer
         timer = setInterval(() => {
@@ -124,8 +140,17 @@ export default function ChallengePage() {
       });
       
       if (res.success) {
-        alert("705 Solution submitted successfully! You will receive feedback within 24-48 hours.");
-        navigate(user?.role === 'student' ? '/student' : '/company');
+        // Fetch the submission details to display status
+        const submissionsRes = await getUserSubmissions();
+        if (submissionsRes.success) {
+          const userSubmission = submissionsRes.data.find(
+            sub => sub.challenge._id === id || sub.challenge === id
+          );
+          if (userSubmission) {
+            setExistingSubmission(userSubmission);
+          }
+        }
+        alert("Solution submitted successfully! You will receive feedback within 24-48 hours.");
       } else {
         setSubmitError(res.error || "Failed to submit solution.");
       }
@@ -382,55 +407,195 @@ export default function ChallengePage() {
         {/* Solution Editor: Only show for students */}
         {user?.role === 'student' && (
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Solution</h2>
-            
-            {submitError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm">{submitError}</p>
+            {existingSubmission ? (
+              // Show submission status if already submitted
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Submission</h2>
+                
+                <div className={`p-6 rounded-lg border-2 ${
+                  existingSubmission.status === 'approved' ? 'bg-green-50 border-green-300' :
+                  existingSubmission.status === 'rejected' ? 'bg-red-50 border-red-300' :
+                  existingSubmission.status === 'reviewing' ? 'bg-blue-50 border-blue-300' :
+                  'bg-yellow-50 border-yellow-300'
+                }`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        existingSubmission.status === 'approved' ? 'bg-green-200' :
+                        existingSubmission.status === 'rejected' ? 'bg-red-200' :
+                        existingSubmission.status === 'reviewing' ? 'bg-blue-200' :
+                        'bg-yellow-200'
+                      }`}>
+                        {existingSubmission.status === 'approved' && (
+                          <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {existingSubmission.status === 'rejected' && (
+                          <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {existingSubmission.status === 'reviewing' && (
+                          <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {existingSubmission.status === 'pending' && (
+                          <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className={`text-lg font-bold ${
+                          existingSubmission.status === 'approved' ? 'text-green-800' :
+                          existingSubmission.status === 'rejected' ? 'text-red-800' :
+                          existingSubmission.status === 'reviewing' ? 'text-blue-800' :
+                          'text-yellow-800'
+                        }`}>
+                          Status: {existingSubmission.status.charAt(0).toUpperCase() + existingSubmission.status.slice(1)}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Submitted on {new Date(existingSubmission.submittedAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {existingSubmission.score !== null && existingSubmission.score !== undefined && (
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-purple-600">
+                          {existingSubmission.score}
+                        </div>
+                        <p className="text-sm text-gray-600">Score</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {existingSubmission.feedback && (
+                    <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-2">Feedback:</h4>
+                      <p className="text-gray-700 whitespace-pre-wrap">{existingSubmission.feedback}</p>
+                    </div>
+                  )}
+
+                  {existingSubmission.solution && (
+                    <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                      <h4 className="font-semibold text-gray-800 mb-2">Your Solution:</h4>
+                      <a 
+                        href={existingSubmission.solution}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 hover:underline break-all"
+                      >
+                        {existingSubmission.solution}
+                      </a>
+                    </div>
+                  )}
+
+                  {existingSubmission.status === 'pending' && (
+                    <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+                      <p className="text-yellow-800 text-sm">
+                        <strong>⏳ Awaiting Review:</strong> Your submission is waiting to be reviewed by the company. You'll receive feedback within 24-48 hours.
+                      </p>
+                    </div>
+                  )}
+
+                  {existingSubmission.status === 'reviewing' && (
+                    <div className="mt-4 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+                      <p className="text-blue-800 text-sm">
+                        <strong>👀 Under Review:</strong> Your submission is currently being reviewed. Check back soon for feedback!
+                      </p>
+                    </div>
+                  )}
+
+                  {existingSubmission.status === 'approved' && (
+                    <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg">
+                      <p className="text-green-800 text-sm">
+                        <strong>🎉 Congratulations!</strong> Your submission has been approved! You've earned {existingSubmission.score} points.
+                      </p>
+                    </div>
+                  )}
+
+                  {existingSubmission.status === 'rejected' && (
+                    <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg">
+                      <p className="text-red-800 text-sm">
+                        <strong>❌ Submission Rejected:</strong> Please review the feedback above and consider improving your solution.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 text-center">
+                  <p className="text-gray-600 text-sm mb-3">
+                    You've already submitted a solution for this challenge. Only one submission is allowed per challenge.
+                  </p>
+                  <button
+                    onClick={() => navigate('/submissions')}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  >
+                    View All My Submissions
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Show submission form if not yet submitted
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Solution</h2>
+                
+                {submitError && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700 text-sm">{submitError}</p>
+                  </div>
+                )}
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    GitHub Repository URL *
+                  </label>
+                  <input
+                    type="url"
+                    value={solution}
+                    onChange={(e) => setSolution(e.target.value)}
+                    placeholder="https://github.com/username/repository-name"
+                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    disabled={timeRemaining === "Expired"}
+                  />
+                  <p className="mt-2 text-sm text-gray-500">
+                    Paste the full URL of your GitHub repository containing the solution
+                  </p>
+                </div>
+                
+                <div className="flex justify-between items-center mt-6">
+                  <div className="text-sm text-gray-600">
+                    <p className="font-medium mb-1">💡 Submission Tips:</p>
+                    <ul className="space-y-1">
+                      <li>• Ensure your repository is public or accessible</li>
+                      <li>• Include a detailed README with setup instructions</li>
+                      <li>• Test your solution thoroughly before submitting</li>
+                      <li>• Make sure your code is well-commented and readable</li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || timeRemaining === "Expired" || !solution.trim()}
+                    className={`px-6 py-3 rounded-lg font-semibold transition ${
+                      isSubmitting || timeRemaining === "Expired" || !solution.trim()
+                        ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                  >
+                    {isSubmitting ? "Submitting..." : 
+                     timeRemaining === "Expired" ? "Challenge Expired" : 
+                     "Submit Solution"}
+                  </button>
+                </div>
               </div>
             )}
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                GitHub Repository URL *
-              </label>
-              <input
-                type="url"
-                value={solution}
-                onChange={(e) => setSolution(e.target.value)}
-                placeholder="https://github.com/username/repository-name"
-                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                disabled={timeRemaining === "Expired"}
-              />
-              <p className="mt-2 text-sm text-gray-500">
-                Paste the full URL of your GitHub repository containing the solution
-              </p>
-            </div>
-            
-            <div className="flex justify-between items-center mt-6">
-              <div className="text-sm text-gray-600">
-                <p className="font-medium mb-1">💡 Submission Tips:</p>
-                <ul className="space-y-1">
-                  <li>• Ensure your repository is public or accessible</li>
-                  <li>• Include a detailed README with setup instructions</li>
-                  <li>• Test your solution thoroughly before submitting</li>
-                  <li>• Make sure your code is well-commented and readable</li>
-                </ul>
-              </div>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting || timeRemaining === "Expired" || !solution.trim()}
-                className={`px-6 py-3 rounded-lg font-semibold transition ${
-                  isSubmitting || timeRemaining === "Expired" || !solution.trim()
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-              >
-                {isSubmitting ? "Submitting..." : 
-                 timeRemaining === "Expired" ? "Challenge Expired" : 
-                 "Submit Solution"}
-              </button>
-            </div>
           </div>
         )}
       </div>

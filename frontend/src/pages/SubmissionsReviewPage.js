@@ -238,9 +238,21 @@ const SubmissionsReviewPage = () => {
             >
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Solution</h3>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {submission.solution}
-                </p>
+                {submission.solution && submission.solution.match(/^https?:\/\//i) ? (
+                  <a
+                    href={submission.solution}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors hover:underline break-all"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
+                    {submission.solution}
+                  </a>
+                ) : (
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {submission.solution}
+                  </p>
+                )}
               </div>
             </motion.div>
 
