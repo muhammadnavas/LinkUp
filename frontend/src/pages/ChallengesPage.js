@@ -147,17 +147,17 @@ export default function ChallengesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex justify-between items-center mb-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 sm:mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Available Challenges</h1>
-            <p className="text-gray-600">Discover and solve coding challenges from top companies</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Available Challenges</h1>
+            <p className="text-sm sm:text-base text-gray-600">Discover and solve coding challenges from top companies</p>
           </div>
           
           {/* Filters */}
-          <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full lg:w-auto">
             <select 
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
               value={filters.difficulty}
               onChange={(e) => handleFilterChange('difficulty', e.target.value)}
             >
@@ -167,7 +167,7 @@ export default function ChallengesPage() {
               <option value="Hard">Hard</option>
             </select>
             <select 
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full sm:w-auto"
               value={filters.company}
               onChange={(e) => handleFilterChange('company', e.target.value)}
             >
@@ -181,7 +181,7 @@ export default function ChallengesPage() {
 
         {/* Results Summary */}
         <div className="mb-6">
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             Showing {filteredChallenges.length} of {challenges.length} challenges
             {(filters.difficulty || filters.company) && (
               <button
@@ -195,24 +195,24 @@ export default function ChallengesPage() {
         </div>
 
         {/* Challenges Grid */}
-        <div className="grid gap-6">
+        <div className="grid gap-4 sm:gap-6">
           {filteredChallenges.length > 0 ? (
             filteredChallenges.map((challenge) => (
-              <div key={challenge._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{challenge.title}</h3>
-                    <p className="text-gray-600 mb-2">
+              <div key={challenge._id} className="bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 break-words">{challenge.title}</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-2">
                       <span className="font-medium">Company:</span> {challenge.company}
                     </p>
-                    <p className="text-gray-700 line-clamp-2">{challenge.description}</p>
+                    <p className="text-sm sm:text-base text-gray-700 line-clamp-2">{challenge.description}</p>
                   </div>
-                  <div className="flex items-start space-x-2 ml-4">
-                    <div className="flex flex-col space-y-2">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(challenge.difficulty)}`}>
+                  <div className="flex gap-2 items-start">
+                    <div className="flex flex-col gap-2">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(challenge.difficulty)} text-center whitespace-nowrap`}>
                         {challenge.difficulty}
                       </span>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium text-center">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium text-center whitespace-nowrap">
                         {challenge.points} points
                       </span>
                     </div>
@@ -223,7 +223,7 @@ export default function ChallengesPage() {
                           e.stopPropagation();
                           setShareMenuOpen(shareMenuOpen === challenge._id ? null : challenge._id);
                         }}
-                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition flex-shrink-0"
                         title="Share Challenge"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

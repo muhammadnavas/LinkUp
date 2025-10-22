@@ -35,9 +35,9 @@ export default function CreateChallengePage() {
   });
 
   // UI state
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -98,7 +98,7 @@ export default function CreateChallengePage() {
       return;
     }
 
-    setIsSubmitting(true);
+    setLoading(true);
     setSubmitError('');
 
     try {
@@ -122,7 +122,7 @@ export default function CreateChallengePage() {
       console.error('Error creating challenge:', error);
       setSubmitError('Failed to create challenge. Please try again.');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -149,7 +149,7 @@ export default function CreateChallengePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <button
             onClick={() => navigate('/company')}
             className="flex items-center text-gray-600 hover:text-gray-800 transition"
@@ -157,24 +157,24 @@ export default function CreateChallengePage() {
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Dashboard
+            <span className="text-sm sm:text-base">Back to Dashboard</span>
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">Create New Challenge</h1>
-          <div></div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Create New Challenge</h1>
+          <div className="hidden sm:block"></div>
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Basic Information */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">Basic Information</h2>
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Basic Information</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Title */}
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Challenge Title *
                 </label>
@@ -285,10 +285,10 @@ export default function CreateChallengePage() {
           </div>
 
           {/* Additional Settings */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">Additional Settings</h2>
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6">Additional Settings</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Submission Format - GitHub Only */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -353,24 +353,20 @@ export default function CreateChallengePage() {
           )}
 
           {/* Submit Buttons */}
-          <div className="flex justify-end space-x-4">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 sm:space-x-4">
             <button
               type="button"
               onClick={() => navigate('/company')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              className="w-full sm:w-auto px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className={`px-6 py-3 rounded-lg font-semibold transition ${
-                isSubmitting
-                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
+              disabled={loading}
+              className="w-full sm:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Creating..." : "Create Challenge"}
+              {loading ? 'Creating...' : 'Create Challenge'}
             </button>
           </div>
         </form>

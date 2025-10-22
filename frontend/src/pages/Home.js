@@ -66,12 +66,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Hero Section */}
-      <div className="container mx-auto px-6 py-16">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-800 mb-6">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-16">
+        <div className="text-center mb-12 sm:mb-16">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 mb-4 sm:mb-6">
             Welcome to <span className="text-blue-600">LinkUp</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto mb-6 sm:mb-8 px-4">
             Bridging the gap between talented students and innovative companies. 
             Showcase your skills through coding challenges and get noticed by top employers.
           </p>
@@ -109,41 +109,41 @@ export default function Home() {
         </div>
 
         {/* Features Section */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center hover:shadow-xl transition">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center hover:shadow-xl transition">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-3">Coding Challenges</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Coding Challenges</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Solve real-world coding problems posted by companies looking for talent. 
               Showcase your programming skills and problem-solving abilities.
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center hover:shadow-xl transition">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center hover:shadow-xl transition">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-3">Skill Assessment</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Skill Assessment</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Get your solutions reviewed and scored by industry professionals. 
               Receive valuable feedback to improve your coding skills.
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center hover:shadow-xl transition">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 text-center hover:shadow-xl transition">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-3">Career Opportunities</h3>
-            <p className="text-gray-600">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Career Opportunities</h3>
+            <p className="text-sm sm:text-base text-gray-600">
               Connect directly with hiring companies. Top performers get noticed 
               and invited for interviews at leading tech companies.
             </p>
@@ -151,11 +151,11 @@ export default function Home() {
         </div>
 
         {/* Public Leaderboards Section */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
+        <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 mb-12 sm:mb-16">
           {/* Top Students Leaderboard */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-blue-600">🏆 Top Students</h3>
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-blue-600">🏆 Top Students</h3>
               <Link
                 to="/leaderboard"
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium hover:underline"
@@ -222,9 +222,9 @@ export default function Home() {
           </div>
 
           {/* Top Companies Leaderboard */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-purple-600">🏢 Active Companies</h3>
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
+              <h3 className="text-xl sm:text-2xl font-bold text-purple-600">🏢 Active Companies</h3>
               <Link
                 to="/leaderboard?type=companies"
                 className="text-purple-600 hover:text-purple-700 text-sm font-medium hover:underline"
@@ -293,12 +293,12 @@ export default function Home() {
         </div>
 
         {/* How It Works Section */}
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-12">How LinkUp Works</h2>
-          <div className="grid md:grid-cols-2 gap-12">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-8 sm:mb-12">How LinkUp Works</h2>
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12">
             {/* For Students */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h3 className="text-2xl font-semibold text-blue-600 mb-6">For Students</h3>
+            <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-semibold text-blue-600 mb-6">For Students</h3>
               <div className="space-y-4 text-left">
                 <div className="flex items-start space-x-3">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -340,8 +340,8 @@ export default function Home() {
             </div>
 
             {/* For Companies */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h3 className="text-2xl font-semibold text-purple-600 mb-6">For Companies</h3>
+            <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-semibold text-purple-600 mb-6">For Companies</h3>
               <div className="space-y-4 text-left">
                 <div className="flex items-start space-x-3">
                   <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -385,9 +385,9 @@ export default function Home() {
         </div>
 
         {/* Stats Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-16">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Platform Statistics</h2>
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-12 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-6 sm:mb-8">Platform Statistics</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center">
             <div>
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {loading ? (
@@ -436,9 +436,9 @@ export default function Home() {
         </div>
 
         {/* Features Showcase */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-16">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Why Choose LinkUp?</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-12 sm:mb-16">
+          <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-6 sm:mb-8">Why Choose LinkUp?</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="flex items-start space-x-3">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -509,9 +509,9 @@ export default function Home() {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center bg-blue-600 rounded-xl shadow-lg p-12 text-white">
-          <h2 className="text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
-          <p className="text-xl mb-8 opacity-90">
+        <div className="text-center bg-blue-600 rounded-xl shadow-lg p-8 sm:p-12 text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Ready to Start Your Journey?</h2>
+          <p className="text-base sm:text-lg lg:text-xl mb-6 sm:mb-8 opacity-90">
             Join thousands of students and companies already using LinkUp to connect talent with opportunity.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

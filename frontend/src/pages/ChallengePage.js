@@ -202,7 +202,7 @@ export default function ChallengePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <button
             onClick={() => navigate(user?.role === 'student' ? '/student' : '/company')}
             className="flex items-center text-gray-600 hover:text-gray-800 transition"
@@ -210,11 +210,11 @@ export default function ChallengePage() {
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Challenges
+            <span className="text-sm sm:text-base">Back to Challenges</span>
           </button>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Time remaining:</span>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <span className="text-xs sm:text-sm text-gray-600">Time remaining:</span>
+            <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
               timeRemaining === "Expired" 
                 ? "bg-red-100 text-red-800" 
                 : "bg-yellow-100 text-yellow-800"
@@ -226,15 +226,15 @@ export default function ChallengePage() {
       </div>
 
       {/* Challenge Details */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {challenge && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">{challenge.title}</h1>
-                <p className="text-gray-600">Company: <span className="font-medium">{challenge.company}</span></p>
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start mb-4 gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 break-words">{challenge.title}</h1>
+                <p className="text-sm sm:text-base text-gray-600">Company: <span className="font-medium">{challenge.company}</span></p>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full lg:w-auto">
                 {/* Share Button */}
                 <div className="relative">
                   <button
