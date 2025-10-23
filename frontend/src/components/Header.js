@@ -22,7 +22,7 @@ const Header = () => {
               alt="LinkUp Logo" 
               className="w-10 h-10 object-contain"
             />
-            <span className="text-2xl font-bold text-gray-800">
+            <span className="text-3xl font-bold text-gray-800">
               Link<span className="text-blue-600">Up</span>
             </span>
           </Link>
