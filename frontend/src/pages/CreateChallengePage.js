@@ -30,8 +30,7 @@ export default function CreateChallengePage() {
     tags: '',
     deadline: '',
     requirements: '',
-    submissionFormat: 'github',
-    maxSubmissions: 1
+    submissionFormat: 'github'
   });
 
   // UI state
@@ -106,8 +105,7 @@ export default function CreateChallengePage() {
       const challengeData = {
         ...formData,
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        points: parseInt(formData.points),
-        maxSubmissions: parseInt(formData.maxSubmissions)
+        points: parseInt(formData.points)
       };
 
       const response = await createChallenge(challengeData);
@@ -303,23 +301,6 @@ export default function CreateChallengePage() {
                   </div>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">Students will submit a GitHub repository link</p>
-              </div>
-
-              {/* Max Submissions */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Max Submissions
-                </label>
-                <input
-                  type="number"
-                  name="maxSubmissions"
-                  value={formData.maxSubmissions}
-                  onChange={handleInputChange}
-                  min="1"
-                  max="10"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <p className="mt-1 text-sm text-gray-500">Number of attempts allowed per student</p>
               </div>
             </div>
 
