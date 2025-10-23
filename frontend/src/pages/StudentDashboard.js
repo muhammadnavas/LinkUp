@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getStudentDashboardStats } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function StudentDashboard() {
@@ -37,19 +38,10 @@ export default function StudentDashboard() {
         return;
       }
       
-      const token = localStorage.getItem('token');
-      const statsRes = await fetch('http://localhost:5000/api/dashboard/student-stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        if (statsData.success) {
-          setStats(statsData.data);
-        }
+      const response = await getStudentDashboardStats();
+      
+      if (response.success) {
+        setStats(response.data);
       } else {
         setError('Failed to load dashboard data');
       }

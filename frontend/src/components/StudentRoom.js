@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChallenges } from '../api';
+import { getChallenges, getStudentDashboardStats } from '../api';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function StudentRoom() {
@@ -39,21 +39,12 @@ export default function StudentRoom() {
     try {
       setLoading(true);
       
-      // Fetch challenges using the API helper
+      // Fetch challenges and dashboard stats using API helpers
       const challengesRes = await getChallenges();
-      
-      // Fetch dashboard stats
-      const token = localStorage.getItem('token');
-      const statsRes = await fetch('http://localhost:5000/api/dashboard/student-stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const statsRes = await getStudentDashboardStats();
 
-      if (challengesRes.success && statsRes.ok) {
+      if (challengesRes.success && statsRes.success) {
         const challengesData = challengesRes.data || challengesRes;
-        const statsData = await statsRes.json();
         
         setChallenges(challengesData);
         
@@ -61,9 +52,7 @@ export default function StudentRoom() {
         const uniqueCompanies = [...new Set(challengesData.map(c => c.company))];
         setCompanies(uniqueCompanies);
         
-        if (statsData.success) {
-          setStats(statsData.data);
-        }
+        setStats(statsRes.data);
       } else {
         setError('Failed to load data');
       }

@@ -184,3 +184,18 @@ export const getPublicStats = async () => {
   });
   return handleResponse(res);
 };
+
+// Dashboard APIs
+export const getStudentDashboardStats = async () => {
+  const res = await fetch(`${API_BASE_URL}/dashboard/student-stats`, { 
+    headers: getAuthHeaders() 
+  });
+  return handleResponse(res);
+};
+
+export const getCompanyDashboardStats = async () => {
+  const res = await fetch(`${API_BASE_URL}/dashboard/company-stats`, { 
+    headers: getAuthHeaders() 
+  });
+  return handleResponse(res);
+};

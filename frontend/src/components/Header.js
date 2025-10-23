@@ -143,12 +143,6 @@ const Header = () => {
                 >
                   Login
                 </Link>
-                <Link 
-                  to="/auth" 
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
-                >
-                  Get Started
-                </Link>
               </>
             )}
           </div>
@@ -256,12 +250,6 @@ const Header = () => {
                 </Link>
                 <Link to="/auth" className="block text-gray-700 hover:text-blue-600 font-medium">
                   Login
-                </Link>
-                <Link 
-                  to="/auth" 
-                  className="block bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition text-center"
-                >
-                  Get Started
                 </Link>
               </>
             )}
