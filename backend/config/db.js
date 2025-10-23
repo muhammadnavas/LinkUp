@@ -36,30 +36,4 @@ const connectDB = async () => {
   }
 };
 
-// Optional: Database health check
-const checkDBHealth = async () => {
-  try {
-    const state = mongoose.connection.readyState;
-    const states = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting',
-    };
-
-    return {
-      status: states[state] || 'unknown',
-      isHealthy: state === 1,
-      host: mongoose.connection.host,
-      name: mongoose.connection.name,
-    };
-  } catch (error) {
-    return {
-      status: 'error',
-      isHealthy: false,
-      error: error.message,
-    };
-  }
-};
-
 module.exports = { connectDB, checkDBHealth };

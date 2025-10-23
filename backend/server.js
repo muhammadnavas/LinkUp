@@ -33,7 +33,6 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',
       'https://link-up-rose-xi.vercel.app',
-      'https://link-e2dzirru0-navas-projects-35356d29.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean); // Remove any undefined values
     

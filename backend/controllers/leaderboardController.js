@@ -1,4 +1,4 @@
-// controllers/leaderboardController.js (Separate controller for leaderboard)
+// controllers/leaderboardController.js
 const User = require('../models/User');
 const Submission = require('../models/Submission');
 

@@ -17,11 +17,7 @@ const Header = () => {
         <nav className="flex justify-between items-center py-4">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src="/logo.png" 
-              alt="LinkUp Logo" 
-              className="w-10 h-10 object-contain"
-            />
+            <img src="/logo.png" alt="LinkUp Logo" className="w-10 h-10 object-contain"/>
             <span className="text-3xl font-bold text-gray-800">
               Link<span className="text-blue-600">Up</span>
             </span>
