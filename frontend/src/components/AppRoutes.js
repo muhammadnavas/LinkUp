@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // Components
@@ -18,6 +19,7 @@ import EditChallengePage from '../pages/EditChallengePage';
 import Home from '../pages/Home';
 import LeaderboardPage from '../pages/LeaderboardPage';
 import ProfilePage from '../pages/ProfilePage';
+import PublicChallengePage from '../pages/PublicChallengePage';
 import StudentDashboard from '../pages/StudentDashboard';
 import SubmissionsPage from '../pages/SubmissionsPage';
 import SubmissionsReviewPage from '../pages/SubmissionsReviewPage';
@@ -37,9 +39,24 @@ const DashboardRoute = () => {
 // Auth Page Component
 const AuthPage = ({ showRegister, setShowRegister, activeRole, setActiveRole, RoleSwitcher }) => {
   const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Check if there's a return URL from the location state
+  const returnTo = location.state?.returnTo;
+
+  useEffect(() => {
+    if (user && returnTo) {
+      // If user logs in and there's a return URL, navigate there
+      navigate(returnTo, { replace: true });
+    } else if (user) {
+      // Otherwise redirect to appropriate dashboard
+      navigate(user.role === "student" ? "/student" : "/company", { replace: true });
+    }
+  }, [user, returnTo, navigate]);
 
   if (user) {
-    return <Navigate to={user.role === "student" ? "/student" : "/company"} />;
+    return null; // Don't render anything while redirecting
   }
 
   return (
@@ -82,6 +99,9 @@ const AppRoutes = ({ showRegister, setShowRegister, activeRole, setActiveRole })
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
+      
+      {/* Public Challenge View - accessible without authentication */}
+      <Route path="/public/challenge/:id" element={<PublicChallengePage />} />
       
       {/* Auth Page */}
       <Route 

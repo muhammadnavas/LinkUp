@@ -38,6 +38,12 @@ export const getChallenge = async (challengeId) => {
   return handleResponse(res);
 };
 
+// Get public challenge details (no authentication required)
+export const getPublicChallenge = async (challengeId) => {
+  const res = await fetch(`${API_BASE_URL}/public/challenge/${challengeId}`);
+  return handleResponse(res);
+};
+
 // Get submissions for a challenge (company only)
 export const getChallengeSubmissions = async (challengeId) => {
   const res = await fetch(`${API_BASE_URL}/challenges/${challengeId}/submissions`, { headers: getAuthHeaders() });

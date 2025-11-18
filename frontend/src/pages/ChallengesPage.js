@@ -89,7 +89,8 @@ export default function ChallengesPage() {
 
   const handleShare = (e, challengeId, challengeTitle, platform) => {
     e.stopPropagation(); // Prevent card click
-    const challengeUrl = `${window.location.origin}/challenge/${challengeId}`;
+    // Use public challenge URL that doesn't require authentication
+    const challengeUrl = `${window.location.origin}/public/challenge/${challengeId}`;
     const shareText = `Check out this coding challenge: ${challengeTitle}`;
     
     switch(platform) {

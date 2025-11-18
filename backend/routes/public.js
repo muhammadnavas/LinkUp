@@ -134,8 +134,56 @@ const getPublicStats = async (req, res) => {
   }
 };
 
+// @desc    Get public challenge details
+// @route   GET /api/public/challenge/:id
+// @access  Public
+const getPublicChallenge = async (req, res) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id)
+      .populate('companyId', 'username companyName');
+    
+    if (!challenge || !challenge.isActive) {
+      return res.status(404).json({
+        success: false,
+        error: 'Challenge not found or inactive'
+      });
+    }
+
+    // Return only public information, no sensitive data
+    const publicChallenge = {
+      _id: challenge._id,
+      title: challenge.title,
+      description: challenge.description,
+      difficulty: challenge.difficulty,
+      points: challenge.points,
+      company: challenge.company,
+      companyName: challenge.companyId?.companyName || challenge.company,
+      deadline: challenge.deadline,
+      requirements: challenge.requirements,
+      examples: challenge.examples,
+      tags: challenge.tags,
+      submissionFormat: challenge.submissionFormat,
+      maxSubmissions: challenge.maxSubmissions,
+      createdAt: challenge.createdAt,
+      isActive: challenge.isActive
+    };
+
+    res.json({
+      success: true,
+      data: publicChallenge
+    });
+  } catch (error) {
+    console.error('Error fetching public challenge:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch challenge'
+    });
+  }
+};
+
 // Routes
 router.get('/leaderboard', getPublicLeaderboard);
 router.get('/stats', getPublicStats);
+router.get('/challenge/:id', getPublicChallenge);
 
 module.exports = router;

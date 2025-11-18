@@ -164,12 +164,13 @@ export default function ChallengePage() {
 
   // Handle share challenge
   const handleShare = (platform) => {
-    const challengeUrl = window.location.href;
+    // Use public challenge URL for sharing so non-registered users can view
+    const publicChallengeUrl = `${window.location.origin}/public/challenge/${id}`;
     const shareText = `Check out this coding challenge: ${challenge?.title}`;
     
     switch(platform) {
       case 'copy':
-        navigator.clipboard.writeText(challengeUrl);
+        navigator.clipboard.writeText(publicChallengeUrl);
         setCopySuccess(true);
         setTimeout(() => {
           setCopySuccess(false);
@@ -177,15 +178,15 @@ export default function ChallengePage() {
         }, 2000);
         break;
       case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(challengeUrl)}`, '_blank');
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(publicChallengeUrl)}`, '_blank');
         setShowShareMenu(false);
         break;
       case 'linkedin':
-        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(challengeUrl)}`, '_blank');
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publicChallengeUrl)}`, '_blank');
         setShowShareMenu(false);
         break;
       case 'whatsapp':
-        window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + challengeUrl)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent(shareText + ' ' + publicChallengeUrl)}`, '_blank');
         setShowShareMenu(false);
         break;
       default:
