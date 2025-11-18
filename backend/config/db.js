@@ -36,4 +36,4 @@ const connectDB = async () => {
   }
 };
 
-module.exports = { connectDB, checkDBHealth };
+module.exports = { connectDB };
