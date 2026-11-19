@@ -64,7 +64,7 @@ export default function CompanyDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [user.id]);
+  }, [user]);
 
   useEffect(() => {
     // Redirect if user is not a company
