@@ -13,12 +13,12 @@ const Header = () => {
 
   return (
     <header className="bg-white shadow-lg border-b border-gray-200">
-      <div className="container mx-auto px-6">
-        <nav className="flex justify-between items-center py-4">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6">
+        <nav className="flex justify-between items-center py-3 sm:py-4 gap-2">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <img src="/logo.png" alt="LinkUp Logo" className="w-10 h-10 object-contain"/>
-            <span className="text-3xl font-bold text-gray-800">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <img src="/logo.png" alt="LinkUp Logo" className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0"/>
+            <span className="text-2xl sm:text-3xl font-bold text-gray-800">
               Link<span className="text-blue-600">Up</span>
             </span>
           </Link>
@@ -149,7 +149,7 @@ const Header = () => {
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-blue-600 font-semibold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(user.name || user.username || "U").charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div className="text-sm">
@@ -167,10 +167,12 @@ const Header = () => {
           )}
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden shrink-0">
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-700 hover:text-blue-600"
+              className="p-2 rounded-lg text-gray-700 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,7 +189,7 @@ const Header = () => {
 
         {/* Mobile Menu */}
         <div className={`md:hidden bg-white border-t border-gray-200 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
-          <div className="px-6 py-4 space-y-3">
+          <div className="px-3 sm:px-6 py-4 space-y-3">
             <Link to="/" className="block text-gray-700 hover:text-blue-600 font-medium">
               Home
             </Link>
@@ -229,7 +231,7 @@ const Header = () => {
                   Profile
                 </Link>
                 <div className="pt-3 border-t border-gray-200">
-                  <div className="text-sm font-semibold text-gray-800 mb-1">{user.name}</div>
+                  <div className="text-sm font-semibold text-gray-800 mb-1 break-words">{user.name || user.username}</div>
                   <div className="text-sm text-gray-500 capitalize mb-3">{user.role}</div>
                   <button
                     onClick={logout}
