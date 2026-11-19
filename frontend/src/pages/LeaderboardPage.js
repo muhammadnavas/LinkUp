@@ -378,8 +378,8 @@ const LeaderboardPage = () => {
                     currentUser && user._id === currentUser._id ? 'bg-purple-50 border-l-4 border-purple-600' : ''
                   }`}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex items-center space-x-4 min-w-0">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                         index < 3 ? getRankBackground(index + 1) : 'bg-gray-100'
                       }`}>
@@ -413,7 +413,7 @@ const LeaderboardPage = () => {
                       </div>
                     </div>
 
-                    <div className="w-full md:w-auto text-left md:text-right">
+                    <div className="w-full lg:w-auto text-left lg:text-right">
                       <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full lg:min-w-[360px] lg:w-auto">
                         <div className="text-center flex-1 min-w-0">
                           <div className="text-xl sm:text-2xl font-bold text-purple-600">
@@ -537,8 +537,8 @@ const LeaderboardPage = () => {
                       transition={{ delay: index * 0.05 }}
                       className="p-4 sm:p-6 hover:bg-gray-50 transition-colors min-w-0"
                     >
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div className="flex items-center space-x-4 min-w-0">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
                           <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                             <Building2 className="w-6 h-6 text-purple-600" />
                           </div>
@@ -560,7 +560,7 @@ const LeaderboardPage = () => {
                           </div>
                         </div>
 
-                        <div className="w-full md:w-auto text-left md:text-right">
+                        <div className="w-full lg:w-auto text-left lg:text-right">
                           <div className="grid grid-cols-2 gap-3 sm:gap-6 w-full lg:w-auto lg:min-w-[220px]">
                             <div className="text-center flex-1 min-w-0">
                               <div className="text-xl sm:text-2xl font-bold text-purple-600">
