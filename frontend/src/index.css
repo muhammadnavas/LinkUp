@@ -49,3 +49,28 @@ pre {
   max-width: 100%;
   overflow-x: auto;
 }
+
+
+/* Shared responsive safeguards */
+#root { min-width: 320px; overflow-x: clip; }
+main, section, article, form, fieldset { min-width: 0; }
+h1, h2, h3, p, a, button, label, td, th { overflow-wrap: anywhere; }
+input, select, textarea, button { max-width: 100%; }
+table { width: 100%; border-collapse: collapse; }
+
+@media (max-width: 640px) {
+  .container, [class*="max-w-"] { max-width: 100%; }
+  pre, .overflow-x-auto { max-width: 100%; -webkit-overflow-scrolling: touch; }
+  table { min-width: 560px; }
+  input, select, textarea { min-width: 0; }
+  button { touch-action: manipulation; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
