@@ -13,14 +13,49 @@ const SubmissionsPage = () => {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
 
+  const fetchSubmissions = useCallback(async () => {
+    try {
+      let response;
+      if (challengeId) {
+        // Fetch submissions for a specific challenge (company view)
+        response = await getChallengeSubmissions(challengeId);
+      } else {
+        // Fetch user's own submissions (student view)
+        response = await getUserSubmissions();
+      }
+
+      // Handle both response formats
+      const submissionsData = response.data || response;
+      setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      throw new Error('Failed to fetch submissions: ' + error.message);
+    }
+  }, [challengeId]);
+
+  const fetchChallenge = useCallback(async () => {
+    try {
+      if (!challengeId) return;
+
+      const response = await getChallenge(challengeId);
+      // Handle both response formats
+      const challengeData = response.data || response;
+      setChallenge(challengeData);
+    } catch (error) {
+      console.error('Error fetching challenge:', error);
+      // Don't throw here - challenge details are optional
+      console.warn('Could not fetch challenge details, but continuing...');
+    }
+  }, [challengeId]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       // Fetch submissions first
       await fetchSubmissions();
-      
+
       // Only fetch challenge details if challengeId is provided
       if (challengeId) {
         await fetchChallenge();
@@ -31,42 +66,7 @@ const SubmissionsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [challengeId]);
-
-  const fetchSubmissions = async () => {
-    try {
-      let response;
-      if (challengeId) {
-        // Fetch submissions for a specific challenge (company view)
-        response = await getChallengeSubmissions(challengeId);
-      } else {
-        // Fetch user's own submissions (student view)
-        response = await getUserSubmissions();
-      }
-      
-      // Handle both response formats
-      const submissionsData = response.data || response;
-      setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
-    } catch (error) {
-      console.error('Error fetching submissions:', error);
-      throw new Error('Failed to fetch submissions: ' + error.message);
-    }
-  };
-
-  const fetchChallenge = async () => {
-    try {
-      if (!challengeId) return;
-      
-      const response = await getChallenge(challengeId);
-      // Handle both response formats
-      const challengeData = response.data || response;
-      setChallenge(challengeData);
-    } catch (error) {
-      console.error('Error fetching challenge:', error);
-      // Don't throw here - challenge details are optional
-      console.warn('Could not fetch challenge details, but continuing...');
-    }
-  };
+  }, [challengeId, fetchSubmissions, fetchChallenge]);
 
   useEffect(() => {
     fetchData();
