@@ -99,6 +99,13 @@ const LeaderboardPage = () => {
     }
   };
 
+  const formatJoinDate = (dateValue) => {
+    const date = dateValue ? new Date(dateValue) : null;
+    return date && !Number.isNaN(date.getTime())
+      ? date.toLocaleDateString()
+      : 'Date unavailable';
+  };
+
   const getCurrentUserRank = () => {
     if (!currentUser) return null;
     const userIndex = leaderboard.findIndex(user => user._id === currentUser._id);
@@ -239,7 +246,7 @@ const LeaderboardPage = () => {
             transition={{ delay: 0.1 }}
             className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg p-6 mb-8 text-white"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex items-center space-x-4 min-w-0">
                 <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                   <User className="w-8 h-8" />
@@ -249,7 +256,7 @@ const LeaderboardPage = () => {
                   <p className="text-purple-100">Your Current Standing</p>
                 </div>
               </div>
-              <div className="w-full sm:w-auto text-left sm:text-right">
+              <div className="w-full md:w-auto text-left md:text-right">
                 <div className="text-3xl font-bold">
                   {getCurrentUserRank() ? `#${getCurrentUserRank()}` : 'Unranked'}
                 </div>
@@ -371,7 +378,7 @@ const LeaderboardPage = () => {
                     currentUser && user._id === currentUser._id ? 'bg-purple-50 border-l-4 border-purple-600' : ''
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex items-center space-x-4 min-w-0">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                         index < 3 ? getRankBackground(index + 1) : 'bg-gray-100'
@@ -395,7 +402,7 @@ const LeaderboardPage = () => {
                         <div className="flex flex-wrap items-center text-gray-500 text-xs sm:text-sm gap-x-3 gap-y-1 mt-1">
                           <span className="flex items-center">
                             <Calendar className="w-4 h-4 mr-1" />
-                            Joined {new Date(user.createdAt).toLocaleDateString()}
+                            Joined {formatJoinDate(user.createdAt)}
                           </span>
                           {user.role === 'company' && (
                             <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs">
@@ -406,8 +413,8 @@ const LeaderboardPage = () => {
                       </div>
                     </div>
 
-                    <div className="w-full sm:w-auto text-left sm:text-right">
-                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
+                    <div className="w-full md:w-auto text-left md:text-right">
+                      <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6 w-full md:w-auto">
                         <div className="text-center flex-1 min-w-0">
                           <div className="text-xl sm:text-2xl font-bold text-purple-600">
                             {user.totalPoints || 0}
@@ -530,7 +537,7 @@ const LeaderboardPage = () => {
                       transition={{ delay: index * 0.05 }}
                       className="p-4 sm:p-6 hover:bg-gray-50 transition-colors min-w-0"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div className="flex items-center space-x-4 min-w-0">
                           <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                             <Building2 className="w-6 h-6 text-purple-600" />
@@ -553,8 +560,8 @@ const LeaderboardPage = () => {
                           </div>
                         </div>
 
-                        <div className="w-full sm:w-auto text-left sm:text-right">
-                          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 w-full sm:w-auto">
+                        <div className="w-full md:w-auto text-left md:text-right">
+                          <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6 w-full md:w-auto">
                             <div className="text-center flex-1 min-w-0">
                               <div className="text-xl sm:text-2xl font-bold text-purple-600">
                                 {company.challengeCount}
