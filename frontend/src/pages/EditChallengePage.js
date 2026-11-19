@@ -191,7 +191,7 @@ export default function EditChallengePage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <button
             onClick={() => navigate('/company')}
             className="flex items-center text-gray-600 hover:text-gray-800 transition"
@@ -201,17 +201,17 @@ export default function EditChallengePage() {
             </svg>
             Back to Dashboard
           </button>
-          <h1 className="text-2xl font-bold text-gray-800">Edit Challenge</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Edit Challenge</h1>
           <div></div>
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Basic Information */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-6">Basic Information</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
