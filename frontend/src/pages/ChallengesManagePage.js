@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getChallenges } from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,7 +11,7 @@ export default function ChallengesManagePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchChallenges = async () => {
+  const fetchChallenges = useCallback(async () => {
     try {
       setLoading(true);
       const challengesRes = await getChallenges();
@@ -31,11 +31,11 @@ export default function ChallengesManagePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id]);
 
   useEffect(() => {
     fetchChallenges();
-  }, [user.id]); // Added user.id as dependency since it's used in fetchChallenges
+  }, [fetchChallenges]);
 
   const getDifficultyColor = (difficulty) => {
     switch(difficulty) {
