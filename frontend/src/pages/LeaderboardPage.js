@@ -368,7 +368,7 @@ const LeaderboardPage = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`p-6 hover:bg-gray-50 transition-colors ${
+                  className={`p-4 sm:p-6 hover:bg-gray-50 transition-colors min-w-0 ${
                     currentUser && user._id === currentUser._id ? 'bg-purple-50 border-l-4 border-purple-600' : ''
                   }`}
                 >
