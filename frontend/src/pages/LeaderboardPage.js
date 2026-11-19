@@ -114,8 +114,8 @@ const LeaderboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100 py-8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-50 to-blue-100 py-6 sm:py-8">
+      <div className="w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -142,7 +142,7 @@ const LeaderboardPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8"
         >
-          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1 mb-6">
+          <div className="flex w-full min-w-0 gap-1 bg-gray-100 rounded-lg p-1 mb-5 sm:mb-6">
             <button
               onClick={() => {
                 setActiveTab('students');
@@ -245,7 +245,7 @@ const LeaderboardPage = () => {
                   <User className="w-8 h-8" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">{currentUser.username}</h3>
+                  <h3 className="text-lg sm:text-xl font-bold break-words">{currentUser.username}</h3>
                   <p className="text-purple-100">Your Current Standing</p>
                 </div>
               </div>
@@ -284,7 +284,7 @@ const LeaderboardPage = () => {
             transition={{ delay: 0.2 }}
             className="mb-8"
           >
-            <div className="flex justify-center items-end space-x-4">
+            <div className="flex justify-center items-end gap-2 sm:gap-4 overflow-x-auto px-1">
               {/* Second Place */}
               <div className="text-center flex-1 min-w-0">
                 <motion.div
@@ -303,8 +303,7 @@ const LeaderboardPage = () => {
                 </div>
               </div>
 
-              {/* First Place */}
-              <div className="text-center flex-1 min-w-0">
+              {/* First Place */}              <div className="text-center flex-1 min-w-0">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -350,7 +349,7 @@ const LeaderboardPage = () => {
           transition={{ delay: 0.3 }}
           className="bg-white rounded-xl shadow-lg overflow-hidden"
         >
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Complete Rankings</h2>
           </div>
           
@@ -511,7 +510,7 @@ const LeaderboardPage = () => {
               transition={{ delay: 0.3 }}
               className="bg-white rounded-xl shadow-lg overflow-hidden"
             >
-              <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+              <div className="px-4 sm:px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h2 className="text-xl font-bold text-gray-900">Active Companies</h2>
               </div>
               
@@ -529,7 +528,7 @@ const LeaderboardPage = () => {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="p-6 hover:bg-gray-50 transition-colors"
+                      className="p-4 sm:p-6 hover:bg-gray-50 transition-colors min-w-0"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center space-x-4 min-w-0">
