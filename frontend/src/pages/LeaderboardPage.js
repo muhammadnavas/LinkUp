@@ -368,7 +368,7 @@ const LeaderboardPage = () => {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className={`p-6 hover:bg-gray-50 transition-colors ${
+                  className={`p-4 sm:p-6 hover:bg-gray-50 transition-colors ${
                     currentUser && user._id === currentUser._id ? 'bg-purple-50 border-l-4 border-purple-600' : ''
                   }`}
                 >
@@ -379,7 +379,7 @@ const LeaderboardPage = () => {
                       }`}>
                         {getRankIcon(index + 1)}
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex flex-wrap items-center min-w-0 break-words">
                           <Link 
                             to={`/profile/${user._id}`}
