@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStudentDashboardStats } from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,16 +18,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    // Redirect if user is not a student
-    if (user && user.role !== 'student') {
-      navigate('/company');
-      return;
-    }
-    fetchDashboardData();
-  }, [user, navigate]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -51,7 +42,16 @@ export default function StudentDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    // Redirect if user is not a student
+    if (user && user.role !== 'student') {
+      navigate('/company');
+      return;
+    }
+    fetchDashboardData();
+  }, [fetchDashboardData, user, navigate]);
 
   const getStatusBadge = (status) => {
     const statusStyles = {
