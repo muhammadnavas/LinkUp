@@ -129,8 +129,8 @@ const LeaderboardPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="flex items-center justify-center mb-4">
-            <Trophy className="w-8 h-8 text-yellow-500 mr-3" />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-4">
+            <Trophy className="w-7 h-7 sm:w-8 sm:h-8 text-yellow-500 shrink-0" />
             <h1 className="text-3xl sm:text-4xl leading-tight font-bold text-gray-900">
               {activeTab === 'students' ? 'Student Leaderboard' : 'Active Companies'}
             </h1>
@@ -161,7 +161,7 @@ const LeaderboardPage = () => {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <User className="w-4 h-4 mr-2" />
+              <User className="w-4 h-4 mr-1 sm:mr-2 shrink-0" />
               Students
             </button>
             <button
@@ -187,7 +187,7 @@ const LeaderboardPage = () => {
                 <TrendingUp className="w-5 h-5 text-purple-600 mr-2" />
                 <span className="font-medium text-gray-900">Ranking Period:</span>
               </div>
-              <div className="flex w-full sm:w-auto space-x-1 bg-gray-100 rounded-lg p-1">
+              <div className="grid grid-cols-3 w-full sm:w-auto gap-1 bg-gray-100 rounded-lg p-1">
                 {[
                   { value: 'all', label: 'All Time' },
                   { value: 'monthly', label: 'This Month' },
@@ -196,7 +196,7 @@ const LeaderboardPage = () => {
                   <button
                     key={option.value}
                     onClick={() => setTimeframe(option.value)}
-                    className={`flex-1 sm:flex-none whitespace-nowrap px-2 sm:px-4 py-2 text-sm sm:text-base rounded-md font-medium transition-colors ${
+                    className={`min-w-0 whitespace-nowrap px-1 sm:px-4 py-2 text-xs sm:text-base rounded-md font-medium transition-colors ${
                       timeframe === option.value
                         ? 'bg-white text-purple-600 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
@@ -246,8 +246,8 @@ const LeaderboardPage = () => {
             transition={{ delay: 0.1 }}
             className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-lg p-6 mb-8 text-white"
           >
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center space-x-4 min-w-0">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
                 <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                   <User className="w-8 h-8" />
                 </div>
@@ -256,15 +256,15 @@ const LeaderboardPage = () => {
                   <p className="text-purple-100">Your Current Standing</p>
                 </div>
               </div>
-              <div className="w-full md:w-auto text-left md:text-right">
+              <div className="w-full lg:w-auto text-left lg:text-right">
                 <div className="text-3xl font-bold">
                   {getCurrentUserRank() ? `#${getCurrentUserRank()}` : 'Unranked'}
                 </div>
                 <p className="text-purple-100">Global Rank</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-purple-400">
-              <div className="text-center flex-1 min-w-0">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-6 pt-6 border-t border-purple-400">
+              <div className="text-center min-w-0">
                 <div className="text-2xl font-bold">{currentUser.totalPoints || 0}</div>
                 <p className="text-purple-100 text-sm">Total Points</p>
               </div>
@@ -305,7 +305,7 @@ const LeaderboardPage = () => {
                   </div>
                 </motion.div>
                 <div className="bg-white rounded-b-lg p-4 shadow-lg">
-                  <h3 className="font-bold text-gray-900">{leaderboard[1].username}</h3>
+                  <h3 className="font-bold text-sm sm:text-base text-gray-900 break-all">{leaderboard[1].username}</h3>
                   <p className="text-gray-600 text-sm">{leaderboard[1].totalPoints} pts</p>
                 </div>
               </div>
@@ -322,7 +322,7 @@ const LeaderboardPage = () => {
                   </div>
                 </motion.div>
                 <div className="bg-white rounded-b-lg p-4 shadow-lg">
-                  <h3 className="font-bold text-gray-900 text-lg">{leaderboard[0].username}</h3>
+                  <h3 className="font-bold text-sm sm:text-lg text-gray-900 break-all">{leaderboard[0].username}</h3>
                   <p className="text-gray-600">{leaderboard[0].totalPoints} pts</p>
                   <div className="text-yellow-500 text-sm font-medium">👑 Champion</div>
                 </div>
@@ -414,7 +414,7 @@ const LeaderboardPage = () => {
                     </div>
 
                     <div className="w-full md:w-auto text-left md:text-right">
-                      <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6 w-full md:w-auto">
+                      <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full lg:min-w-[360px] lg:w-auto">
                         <div className="text-center flex-1 min-w-0">
                           <div className="text-xl sm:text-2xl font-bold text-purple-600">
                             {user.totalPoints || 0}
@@ -561,7 +561,7 @@ const LeaderboardPage = () => {
                         </div>
 
                         <div className="w-full md:w-auto text-left md:text-right">
-                          <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6 w-full md:w-auto">
+                          <div className="grid grid-cols-2 gap-3 sm:gap-6 w-full lg:w-auto lg:min-w-[220px]">
                             <div className="text-center flex-1 min-w-0">
                               <div className="text-xl sm:text-2xl font-bold text-purple-600">
                                 {company.challengeCount}
