@@ -190,6 +190,15 @@ router.get('/:id', protect, async (req, res) => {
       });
     }
 
+    if (user.role === 'company' && submission.challenge.companyId?.toString() === user.id.toString() && !submission.viewedAt) {
+      await Submission.updateOne(
+        { _id: submission._id, viewedAt: null },
+        { $set: { viewedAt: new Date(), viewedBy: user.id } }
+      );
+      submission.viewedAt = new Date();
+      submission.viewedBy = user.id;
+    }
+
     res.json({
       success: true,
       data: submission
