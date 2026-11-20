@@ -81,8 +81,13 @@ export const updateChallenge = async (challengeId, challengeData) => {
 };
 
 // Get user's own submissions
-export const getUserSubmissions = async () => {
-  const res = await fetch(`${API_BASE_URL}/auth/submissions`, { headers: getAuthHeaders() });
+export const getUserSubmissions = async (page = 1, limit = 50, status = 'all') => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    status
+  });
+  const res = await fetch(`${API_BASE_URL}/auth/submissions?${params}`, { headers: getAuthHeaders() });
   return handleResponse(res);
 };
 
