@@ -88,6 +88,42 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// PUT /api/submissions/:id - Edit a submission before the company first views it
+router.put('/:id', protect, authorize('student'), async (req, res) => {
+  try {
+    const { solution, repoLink, codeSubmission } = req.body;
+    if (!solution || !solution.trim()) {
+      return res.status(400).json({ success: false, error: 'A solution is required' });
+    }
+
+    const submission = await Submission.findOne({ _id: req.params.id, user: req.user.id });
+    if (!submission) {
+      return res.status(404).json({ success: false, error: 'Submission not found' });
+    }
+    if (submission.viewedAt || submission.status !== 'pending') {
+      return res.status(403).json({
+        success: false,
+        error: 'This submission is locked because the company has viewed it'
+      });
+    }
+
+    const challenge = await Challenge.findById(submission.challenge);
+    if (!challenge || !challenge.isActive || Date.now() >= new Date(challenge.deadline).getTime()) {
+      return res.status(400).json({ success: false, error: 'The challenge is no longer accepting submission edits' });
+    }
+
+    submission.solution = solution.trim();
+    submission.repoLink = repoLink || undefined;
+    submission.codeSubmission = codeSubmission || undefined;
+    await submission.save();
+
+    res.json({ success: true, data: submission, message: 'Submission updated successfully' });
+  } catch (error) {
+    console.error('Error updating submission:', error);
+    res.status(500).json({ success: false, error: 'Failed to update submission' });
+  }
+});
+
 // GET /api/submissions - Get user's submissions
 router.get('/', protect, async (req, res) => {
   try {
