@@ -348,7 +348,9 @@ const getUserSubmissions = async (req, res) => {
     }
 
     const submissions = await Submission.find(filter)
-      .populate('challenge', 'title difficulty description')
+      .populate('user', 'username name email')
+      .populate('challenge', 'title company difficulty points deadline submissionFormat')
+      .populate('reviewedBy', 'username name')
       .sort({ submittedAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
