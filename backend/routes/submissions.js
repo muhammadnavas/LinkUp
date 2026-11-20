@@ -100,24 +100,33 @@ router.put('/:id', protect, authorize('student'), async (req, res) => {
     if (!submission) {
       return res.status(404).json({ success: false, error: 'Submission not found' });
     }
-    if (submission.viewedAt || submission.status !== 'pending') {
-      return res.status(403).json({
-        success: false,
-        error: 'This submission is locked because the company has viewed it'
-      });
-    }
 
     const challenge = await Challenge.findById(submission.challenge);
     if (!challenge || !challenge.isActive || Date.now() >= new Date(challenge.deadline).getTime()) {
       return res.status(400).json({ success: false, error: 'The challenge is no longer accepting submission edits' });
     }
 
-    submission.solution = solution.trim();
-    submission.repoLink = repoLink || undefined;
-    submission.codeSubmission = codeSubmission || undefined;
-    await submission.save();
+    // Atomic condition prevents an edit racing with the company's first view.
+    const updatedSubmission = await Submission.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id, viewedAt: null, status: 'pending' },
+      {
+        $set: {
+          solution: solution.trim(),
+          repoLink: repoLink || undefined,
+          codeSubmission: codeSubmission || undefined
+        }
+      },
+      { new: true, runValidators: true }
+    );
 
-    res.json({ success: true, data: submission, message: 'Submission updated successfully' });
+    if (!updatedSubmission) {
+      return res.status(403).json({
+        success: false,
+        error: 'This submission is locked because the company has viewed it or review has started'
+      });
+    }
+
+    res.json({ success: true, data: updatedSubmission, message: 'Submission updated successfully' });
   } catch (error) {
     console.error('Error updating submission:', error);
     res.status(500).json({ success: false, error: 'Failed to update submission' });
