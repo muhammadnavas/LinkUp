@@ -14,8 +14,11 @@ router.get('/student-stats', protect, async (req, res) => {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    // Get all challenges
-    const totalChallenges = await Challenge.countDocuments({ isActive: true });
+    // Count only challenges that are active and have not passed their deadline.
+    const totalChallenges = await Challenge.countDocuments({
+      isActive: true,
+      deadline: { $gt: new Date() }
+    });
 
     // Get user's submissions
     const userSubmissions = await Submission.find({ user: req.user.id })
