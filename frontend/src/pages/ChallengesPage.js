@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChallenges } from '../api';
+import { getChallenges, getUserSubmissions } from '../api';
 
 export default function ChallengesPage() {
   const navigate = useNavigate();
   
   const [challenges, setChallenges] = useState([]);
+  const [submissionsByChallenge, setSubmissionsByChallenge] = useState({});
   const [filteredChallenges, setFilteredChallenges] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [filters, setFilters] = useState({
@@ -25,13 +26,38 @@ export default function ChallengesPage() {
     try {
       setLoading(true);
       const challengesRes = await getChallenges();
-      
+
       if (challengesRes.success) {
         const challengesData = challengesRes.data || challengesRes;
         setChallenges(challengesData);
-        
+
+        // Load the signed-in student's submissions so each challenge can show its true status.
+        if (localStorage.getItem('token')) {
+          try {
+            const firstPage = await getUserSubmissions();
+            let submissions = firstPage.success ? (firstPage.data || []) : [];
+            const totalPages = firstPage.pagination?.pages || 1;
+            for (let page = 2; page <= totalPages; page += 1) {
+              const pageResult = await getUserSubmissions(page);
+              if (pageResult.success && Array.isArray(pageResult.data)) {
+                submissions = submissions.concat(pageResult.data);
+              }
+            }
+
+            const submissionMap = {};
+            submissions.forEach(submission => {
+              const challengeId = submission.challenge?._id || submission.challenge;
+              if (challengeId) submissionMap[String(challengeId)] = submission;
+            });
+            setSubmissionsByChallenge(submissionMap);
+          } catch (submissionError) {
+            // Keep challenge discovery available even if submission history cannot load.
+            console.error('Unable to load submission statuses:', submissionError);
+          }
+        }
+
         // Extract unique companies for filter dropdown
-        const uniqueCompanies = [...new Set(challengesData.map(c => c.company).filter(Boolean))];
+        const uniqueCompanies = [...new Set(challengesData.map(challenge => challenge.company).filter(Boolean))];
         setCompanies(uniqueCompanies);
       } else {
         setError('Failed to load challenges');
@@ -204,7 +230,29 @@ export default function ChallengesPage() {
               <div key={challenge._id} className="bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow">
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 break-words">{challenge.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-800 break-words">{challenge.title}</h3>
+                      {submissionsByChallenge[challenge._id] && (() => {
+                        const submission = submissionsByChallenge[challenge._id];
+                        const statusLabel = submission.status === 'pending'
+                          ? (submission.viewedAt ? 'Viewed by company' : 'Submitted')
+                          : submission.status.charAt(0).toUpperCase() + submission.status.slice(1);
+                        const statusStyle = submission.status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : submission.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : submission.status === 'reviewing'
+                              ? 'bg-blue-100 text-blue-800'
+                              : submission.viewedAt
+                                ? 'bg-cyan-100 text-cyan-800'
+                                : 'bg-yellow-100 text-yellow-800';
+                        return (
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle}`}>
+                            {statusLabel}
+                          </span>
+                        );
+                      })()}
+                    </div>
                     <p className="text-sm sm:text-base text-gray-600 mb-2">
                       <span className="font-medium">Company:</span> {challenge.company}
                     </p>
@@ -289,7 +337,7 @@ export default function ChallengesPage() {
                     onClick={() => handleChallengeClick(challenge._id)}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
                   >
-                    Start Challenge
+                    {submissionsByChallenge[challenge._id] ? 'View Submission' : 'Start Challenge'}
                   </button>
                 </div>
                 
