@@ -87,7 +87,7 @@ const profileUpdateValidation = [
     })
     .custom((value) => {
       // Only validate if there's actually a value
-      if (value && !value.match(/^https?:\\/\\/.+/)) {
+      if (value && !value.match(/^https?:\/\/.+/)) {
         throw new Error('Please provide a valid URL starting with http:// or https://');
       }
       return true;
@@ -100,7 +100,7 @@ const profileUpdateValidation = [
     })
     .custom((value) => {
       // Only validate if there's actually a value
-      if (value && !value.match(/^https?:\\/\\/(www\\.)?github\\.com\\/.+/)) {
+      if (value && !value.match(/^https?:\/\/(www\.)?github\.com\/.+/)) {
         throw new Error('Please provide a valid GitHub URL');
       }
       return true;
@@ -113,7 +113,7 @@ const profileUpdateValidation = [
     })
     .custom((value) => {
       // Only validate if there's actually a value
-      if (value && !value.match(/^https?:\\/\\/(www\\.)?(linkedin\\.com|linkedin\\.in)\\/.+/)) {
+      if (value && !value.match(/^https?:\/\/(www\.)?(linkedin\.com|linkedin\.in)\/.+/)) {
         throw new Error('Please provide a valid LinkedIn URL');
       }
       return true;
