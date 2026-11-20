@@ -1,7 +1,7 @@
 // src/pages/ChallengePage.js
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getChallenge, getUserSubmissions, submitSolution } from "../api";
+import { getChallenge, getUserSubmissions, submitSolution, updateSubmission } from "../api";
 import { useAuth } from '../contexts/AuthContext';
 
 export default function ChallengePage() {
@@ -20,6 +20,7 @@ export default function ChallengePage() {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [existingSubmission, setExistingSubmission] = useState(null);
+  const [isEditingSubmission, setIsEditingSubmission] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -63,6 +64,7 @@ export default function ChallengePage() {
             );
             if (userSubmission) {
               setExistingSubmission(userSubmission);
+              setSolution(userSubmission.repoLink || userSubmission.solution || "");
             }
           }
         } catch (submissionErr) {
@@ -148,6 +150,7 @@ export default function ChallengePage() {
           );
           if (userSubmission) {
             setExistingSubmission(userSubmission);
+            setSolution(userSubmission.repoLink || userSubmission.solution || "");
           }
         }
         alert("Solution submitted successfully! You will receive feedback within 24-48 hours.");
@@ -157,6 +160,28 @@ export default function ChallengePage() {
     } catch (error) {
       console.error("Submission error:", error);
       setSubmitError("Error submitting solution. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Update an existing submission while the company has not viewed it.
+  const handleUpdateSubmission = async () => {
+    if (!solution.trim()) {
+      setSubmitError("Please enter your solution before saving.");
+      return;
+    }
+    setIsSubmitting(true);
+    setSubmitError("");
+    try {
+      const response = await updateSubmission(existingSubmission._id, { solution: solution.trim() });
+      if (response.success) {
+        setExistingSubmission(response.data);
+        setIsEditingSubmission(false);
+        setSubmitError("");
+      }
+    } catch (error) {
+      setSubmitError(error.message || "Unable to update submission.");
     } finally {
       setIsSubmitting(false);
     }
@@ -455,7 +480,7 @@ export default function ChallengePage() {
                           existingSubmission.status === 'reviewing' ? 'text-blue-800' :
                           'text-yellow-800'
                         }`}>
-                          Status: {existingSubmission.status.charAt(0).toUpperCase() + existingSubmission.status.slice(1)}
+                          Status: {existingSubmission.status === 'pending' ? 'Submitted' : existingSubmission.status.charAt(0).toUpperCase() + existingSubmission.status.slice(1)}
                         </h3>
                         <p className="text-sm text-gray-600">
                           Submitted on {new Date(existingSubmission.submittedAt).toLocaleDateString('en-US', { 
@@ -531,16 +556,54 @@ export default function ChallengePage() {
                   )}
                 </div>
 
-                <div className="mt-6 text-center">
-                  <p className="text-gray-600 text-sm mb-3">
-                    You've already submitted a solution for this challenge. Only one submission is allowed per challenge.
-                  </p>
-                  <button
-                    onClick={() => navigate('/submissions')}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    View All My Submissions
-                  </button>
+                <div className="mt-6">
+                  {submitError && (
+                    <p className="mb-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">{submitError}</p>
+                  )}
+                  {!existingSubmission.viewedAt && existingSubmission.status === 'pending' && timeRemaining !== "Expired" ? (
+                    isEditingSubmission ? (
+                      <div className="space-y-3">
+                        <label className="block text-sm font-medium text-gray-700">Update GitHub repository URL</label>
+                        <input
+                          type="url"
+                          value={solution}
+                          onChange={(event) => setSolution(event.target.value)}
+                          placeholder="https://github.com/username/repository"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          <button onClick={handleUpdateSubmission} disabled={isSubmitting || !solution.trim()} className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
+                            {isSubmitting ? "Saving..." : "Save Changes"}
+                          </button>
+                          <button onClick={() => { setSolution(existingSubmission.repoLink || existingSubmission.solution || ""); setIsEditingSubmission(false); }} className="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                            Cancel
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500">You can edit until the company opens your submission.</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-sm text-green-700">Not viewed by the company yet. You can still edit your submission.</p>
+                        <button onClick={() => setIsEditingSubmission(true)} className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                          Edit Submission
+                        </button>
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      {existingSubmission.viewedAt
+                        ? "The company has viewed your submission. Editing is now locked."
+                        : "This submission can no longer be edited."}
+                    </p>
+                  )}
+                  <div className="text-center mt-4">
+                    <button
+                      onClick={() => navigate('/submissions')}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                    >
+                      View All My Submissions
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
