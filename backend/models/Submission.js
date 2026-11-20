@@ -46,6 +46,15 @@ const submissionSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  viewedAt: {
+    type: Date,
+    default: null
+  },
+  viewedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   submittedAt: {
     type: Date,
     default: Date.now
