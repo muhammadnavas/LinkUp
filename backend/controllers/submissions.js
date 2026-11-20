@@ -186,14 +186,21 @@ const getSubmissionForReview = async (req, res) => {
 
     // The first authorized company view permanently locks student edits.
     if (!submission.viewedAt) {
-      submission.viewedAt = new Date();
-      submission.viewedBy = user.id;
-      await submission.save();
+      await Submission.updateOne(
+        { _id: submission._id, viewedAt: null },
+        { $set: { viewedAt: new Date(), viewedBy: user.id } }
+      );
     }
+
+    const viewedSubmission = await Submission.findById(submission._id)
+      .populate('user', 'username email name university major graduationYear')
+      .populate('challenge', 'title description company companyId points difficulty requirements examples')
+      .populate('reviewedBy', 'username name')
+      .populate('viewedBy', 'username name');
 
     res.json({
       success: true,
-      data: submission
+      data: viewedSubmission
     });
 
   } catch (error) {
