@@ -180,7 +180,7 @@ const SubmissionsReviewPage = () => {
                 submission.status
               )}`}
             >
-              {submission.status}
+              {submission.status === 'pending' && submission.viewedAt ? 'Viewed' : submission.status}
             </span>
           </div>
         </motion.div>
