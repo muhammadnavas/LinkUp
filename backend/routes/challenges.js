@@ -10,7 +10,8 @@ router.get('/', async (req, res) => {
   try {
     const { difficulty, company, page = 1, limit = 10 } = req.query;
     
-    const filter = { isActive: true };
+    // Only return challenges that are active and whose deadline is still in the future.
+    const filter = { isActive: true, deadline: { $gt: new Date() } };
     
     if (difficulty) filter.difficulty = difficulty;
     if (company) filter.company = new RegExp(company, 'i');
