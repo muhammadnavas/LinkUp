@@ -22,7 +22,10 @@ const registerValidation = [
     .trim()
     .isLength({ min: 2, max: 100 })
     .withMessage('Name must be between 2 and 100 characters'),
+  // Username is optional in the registration form; the controller generates
+  // one from the email address when it is omitted.
   body('username')
+    .optional()
     .trim()
     .isLength({ min: 3, max: 30 })
     .withMessage('Username must be between 3 and 30 characters')
@@ -84,7 +87,7 @@ const profileUpdateValidation = [
     })
     .custom((value) => {
       // Only validate if there's actually a value
-      if (value && !value.match(/^https?:\/\/.+/)) {
+      if (value && !value.match(/^https?:\\/\\/.+/)) {
         throw new Error('Please provide a valid URL starting with http:// or https://');
       }
       return true;
@@ -97,7 +100,7 @@ const profileUpdateValidation = [
     })
     .custom((value) => {
       // Only validate if there's actually a value
-      if (value && !value.match(/^https?:\/\/(www\.)?github\.com\/.+/)) {
+      if (value && !value.match(/^https?:\\/\\/(www\\.)?github\\.com\\/.+/)) {
         throw new Error('Please provide a valid GitHub URL');
       }
       return true;
@@ -110,7 +113,7 @@ const profileUpdateValidation = [
     })
     .custom((value) => {
       // Only validate if there's actually a value
-      if (value && !value.match(/^https?:\/\/(www\.)?(linkedin\.com|linkedin\.in)\/.+/)) {
+      if (value && !value.match(/^https?:\\/\\/(www\\.)?(linkedin\\.com|linkedin\\.in)\\/.+/)) {
         throw new Error('Please provide a valid LinkedIn URL');
       }
       return true;
