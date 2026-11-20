@@ -21,10 +21,6 @@ export default function ChallengesPage() {
     fetchChallenges();
   }, []);
 
-  useEffect(() => {
-    fetchChallenges();
-  }, []);
-
   const fetchChallenges = async () => {
     try {
       setLoading(true);
@@ -49,7 +45,13 @@ export default function ChallengesPage() {
   };
 
   const applyFilters = useCallback(() => {
-    let filtered = [...challenges];
+    // Defensive client-side guard: never label expired or inactive records as available.
+    const now = Date.now();
+    let filtered = challenges.filter(challenge =>
+      challenge.isActive !== false &&
+      challenge.deadline &&
+      new Date(challenge.deadline).getTime() > now
+    );
     
     if (filters.difficulty && filters.difficulty !== '') {
       filtered = filtered.filter(challenge => challenge.difficulty === filters.difficulty);
