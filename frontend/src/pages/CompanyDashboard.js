@@ -60,7 +60,7 @@ export default function CompanyDashboard() {
       // Calculate reviewed challenges (challenges that have at least one reviewed submission)
       const challengesWithReviews = new Set();
       allSubmissions.forEach(submission => {
-        if (submission.status === 'approved' || submission.status === 'rejected') {
+        if (['approved', 'accepted', 'rejected'].includes(submission.status) && submission.challenge) {
           challengesWithReviews.add(submission.challenge._id || submission.challenge);
         }
       });
@@ -211,7 +211,14 @@ export default function CompanyDashboard() {
             <div className="space-y-4">
               {stats.recentActivity.length > 0 ? (
                 stats.recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <button
+                    type="button"
+                    key={activity._id}
+                    onClick={() => activity._id && navigate(`/submissions/${activity._id}/review`)}
+                    disabled={!activity._id}
+                    className="w-full text-left flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 hover:ring-1 hover:ring-blue-200 transition focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-default"
+                    aria-label={`Open submission for ${activity.user?.username || activity.user?.name || 'student'}`}
+                  >
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                       <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
