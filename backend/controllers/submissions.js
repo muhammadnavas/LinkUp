@@ -13,10 +13,10 @@ const reviewSubmission = async (req, res) => {
     const { user } = req;
 
     // Validate input
-    if (!status || !['approved', 'rejected'].includes(status)) {
+    if (!status || !['reviewing', 'approved', 'rejected'].includes(status)) {
       return res.status(400).json({
         success: false,
-        error: 'Valid status (approved or rejected) is required'
+        error: 'Valid status (reviewing, approved or rejected) is required'
       });
     }
 
@@ -67,10 +67,10 @@ const reviewSubmission = async (req, res) => {
 
     // Update submission
     submission.status = status;
-    submission.score = status === 'approved' ? parseInt(score) : 0;
+    submission.score = status === 'approved' ? parseInt(score) : null;
     submission.feedback = feedback || '';
     submission.reviewedBy = user.id;
-    submission.reviewedAt = new Date();
+    submission.reviewedAt = status === 'reviewing' ? null : new Date();
 
     await submission.save();
 
@@ -107,7 +107,7 @@ const reviewSubmission = async (req, res) => {
           // Don't fail the whole request if activity creation fails
         }
       }
-    } else {
+    } else if (status === 'rejected') {
       // Create activity for rejection
       try {
         const activity = new Activity({
@@ -124,7 +124,7 @@ const reviewSubmission = async (req, res) => {
     // Update company stats
     try {
       const companyUser = await User.findById(user.id);
-      if (companyUser) {
+      if (companyUser && status !== 'reviewing') {
         companyUser.submissionsReviewed = (companyUser.submissionsReviewed || 0) + 1;
         if (status === 'approved') {
           companyUser.companyPoints = (companyUser.companyPoints || 0) + 10; // Company gets points for reviewing
@@ -177,11 +177,18 @@ const getSubmissionForReview = async (req, res) => {
     }
 
     // Check authorization
-    if (submission.challenge.companyId.toString() !== user.id.toString() && user.role !== 'admin') {
+    if (submission.challenge.companyId?.toString() !== user.id.toString() && user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         error: 'You can only view submissions for your own challenges'
       });
+    }
+
+    // The first authorized company view permanently locks student edits.
+    if (!submission.viewedAt) {
+      submission.viewedAt = new Date();
+      submission.viewedBy = user.id;
+      await submission.save();
     }
 
     res.json({
