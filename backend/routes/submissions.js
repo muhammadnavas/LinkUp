@@ -37,7 +37,7 @@ router.post('/', protect, async (req, res) => {
     }
 
     // Check deadline
-    if (new Date() > new Date(challenge.deadline)) {
+    if (Date.now() >= new Date(challenge.deadline).getTime()) {
       return res.status(400).json({
         success: false,
         error: 'Challenge deadline has passed'
