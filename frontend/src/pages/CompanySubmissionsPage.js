@@ -72,6 +72,7 @@ const CompanySubmissionsPage = () => {
   const getStatusBadge = (status) => {
     const statusStyles = {
       'pending': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'viewed': 'bg-cyan-100 text-cyan-800 border-cyan-200',
       'reviewing': 'bg-blue-100 text-blue-800 border-blue-200',
       'approved': 'bg-green-100 text-green-800 border-green-200',
       'rejected': 'bg-red-100 text-red-800 border-red-200'
@@ -175,7 +176,7 @@ const CompanySubmissionsPage = () => {
                         <h3 className="text-lg font-semibold text-gray-900">
                           {submission.challenge?.title || 'Challenge Submission'}
                         </h3>
-                        {getStatusBadge(submission.status)}
+                        {getStatusBadge(submission.status === 'pending' && submission.viewedAt ? 'viewed' : submission.status)}
                       </div>
                       
                       <div className="flex items-center space-x-6 text-sm text-gray-600 mb-3">
