@@ -205,7 +205,7 @@ const SubmissionsPage = () => {
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {submission.user?.username || submission.userId?.username || 'Anonymous'}
+                          {submission.user?.name || submission.user?.username || submission.user?.email || 'You'}
                         </h3>
                         <div className="flex items-center text-gray-500 text-sm">
                           <Calendar className="w-4 h-4 mr-1" />
@@ -237,36 +237,37 @@ const SubmissionsPage = () => {
 
                   {/* Challenge Info (for user submissions view) */}
                   {!challengeId && submission.challenge && (
-                    <div className="bg-blue-50 rounded-lg p-3 mb-4">
-                      <h4 className="font-medium text-blue-900 mb-1">Challenge:</h4>
-                      <p className="text-blue-800">{submission.challenge.title}</p>
-                      <div className="flex items-center text-blue-600 text-sm mt-1">
-                        <span className="mr-3">Difficulty: {submission.challenge.difficulty}</span>
-                        <span>Points: {submission.challenge.points}</span>
+                    <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                      <h4 className="font-semibold text-blue-900 mb-1">Challenge</h4>
+                      <p className="text-blue-800 font-medium">{submission.challenge.title}</p>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-blue-700 text-sm mt-2">
+                        {submission.challenge.company && <span>Company: {submission.challenge.company}</span>}
+                        {submission.challenge.difficulty && <span>Difficulty: {submission.challenge.difficulty}</span>}
+                        {submission.challenge.points != null && <span className="font-medium">{submission.challenge.points} points</span>}
                       </div>
                     </div>
                   )}
 
                   {/* Submission Content */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <h4 className="font-medium text-gray-900 mb-2">Solution:</h4>
-                    <p className="text-gray-700 whitespace-pre-wrap">
-                      {submission.solution}
-                    </p>
-                  </div>
+                  {/* Older submissions stored the GitHub URL in the solution field. */}
+                  {submission.solution && !/^https?:\/\//i.test(submission.solution) && (
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <h4 className="font-medium text-gray-900 mb-2">Solution</h4>
+                      <p className="text-gray-700 whitespace-pre-wrap break-words">{submission.solution}</p>
+                    </div>
+                  )}
 
-                  {/* Repository Link */}
-                  {submission.repoLink && (
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-900 mb-2">Repository:</h4>
+                  {(submission.repoLink || /^https?:\/\//i.test(submission.solution || '')) && (
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <h4 className="font-medium text-gray-900 mb-2">GitHub Repository</h4>
                       <a
-                        href={submission.repoLink}
+                        href={submission.repoLink || submission.solution}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                        className="inline-flex max-w-full items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors break-all"
                       >
-                        <ExternalLink className="w-4 h-4 mr-1" />
-                        {submission.repoLink}
+                        <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                        {submission.repoLink || submission.solution}
                       </a>
                     </div>
                   )}
