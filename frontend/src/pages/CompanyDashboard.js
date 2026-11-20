@@ -33,14 +33,28 @@ export default function CompanyDashboard() {
       let companyChallenges = [];
       if (challengesRes.success) {
         // Filter challenges created by this company (compare as strings)
-        companyChallenges = challengesRes.data.filter(c => c.companyId && String(c.companyId._id) === String(user.id));
+        companyChallenges = challengesRes.data.filter(challenge => {
+          const ownerId = typeof challenge.companyId === 'object'
+            ? challenge.companyId?._id
+            : challenge.companyId;
+          return ownerId && String(ownerId) === String(user.id);
+        });
       }
 
       // Fetch company submissions directly
       const submissionsRes = await getCompanySubmissions('all', 1, 50);
       let allSubmissions = [];
       if (submissionsRes.success) {
-        allSubmissions = submissionsRes.data;
+        allSubmissions = submissionsRes.data || [];
+
+        // Load every page so dashboard totals and reviewed-challenge counts are accurate.
+        const totalPages = submissionsRes.pagination?.totalPages || 1;
+        for (let page = 2; page <= totalPages; page += 1) {
+          const pageRes = await getCompanySubmissions('all', page, 50);
+          if (pageRes.success && Array.isArray(pageRes.data)) {
+            allSubmissions = allSubmissions.concat(pageRes.data);
+          }
+        }
       }
 
       // Calculate reviewed challenges (challenges that have at least one reviewed submission)
@@ -54,7 +68,7 @@ export default function CompanyDashboard() {
       setStats({
         totalChallenges: companyChallenges.length,
         totalSubmissions: allSubmissions.length,
-        pendingReviews: allSubmissions.filter(s => s.status === 'pending').length,
+        pendingReviews: allSubmissions.filter(s => s.status === 'pending' || s.status === 'reviewing').length,
         reviewedChallenges: challengesWithReviews.size,
         recentActivity: allSubmissions.slice(0, 5)
       });
@@ -79,6 +93,7 @@ export default function CompanyDashboard() {
     const statusStyles = {
       'pending': 'bg-yellow-100 text-yellow-800',
       'reviewing': 'bg-blue-100 text-blue-800',
+      'approved': 'bg-green-100 text-green-800',
       'accepted': 'bg-green-100 text-green-800',
       'rejected': 'bg-red-100 text-red-800'
     };
@@ -203,21 +218,24 @@ export default function CompanyDashboard() {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-sm font-medium text-gray-800">{activity.title}</h3>
-                      {activity.challengeTitle && (
-                        <p className="text-xs text-gray-600 mt-1">Challenge: {activity.challengeTitle}</p>
-                      )}
-                      {activity.userName && (
-                        <p className="text-xs text-gray-600 mt-1">Student: {activity.userName}</p>
-                      )}
+                      <h3 className="text-sm font-semibold text-gray-800">{activity.challenge?.title || 'Challenge submission'}</h3>
+                      <p className="text-xs text-gray-600 mt-1">Student: {activity.user?.name || activity.user?.username || 'Unknown student'}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(activity.date).toLocaleDateString()}
+                        {activity.submittedAt && !Number.isNaN(new Date(activity.submittedAt).getTime())
+                          ? `Submitted ${new Date(activity.submittedAt).toLocaleString()}`
+                          : 'Submission date unavailable'}
                       </p>
-                      <div className="flex items-center space-x-2 mt-2">
-                        {activity.status && getStatusBadge(activity.status)}
+                      {activity.viewedAt && (
+                        <p className="text-xs text-cyan-700 mt-1">Opened by company</p>
+                      )}
+                      <div className="flex items-center justify-between gap-3 mt-2">
+                        <div className="flex items-center space-x-2">
+                          {activity.status && getStatusBadge(activity.status)}
+                        </div>
+                        <span className="text-xs font-medium text-blue-600">Open submission →</span>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))
               ) : (
                 <div className="text-center py-8">
