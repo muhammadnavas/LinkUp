@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getChallenges, getUserProfile, getUserSubmissions, updateUserProfile } from '../api';
+import { getChallenges, getCompanySubmissions, getUserProfile, getUserSubmissions, updateUserProfile } from '../api';
 import { AuthContext } from '../contexts/AuthContext';
 
 const ProfilePage = () => {
@@ -23,6 +23,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [companyStats, setCompanyStats] = useState({ challengesCreated: 0, submissionsReviewed: 0 });
+  const [companyActivity, setCompanyActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -47,40 +48,48 @@ const ProfilePage = () => {
       setLoading(true);
       setError('');
       
-      const [profileResponse, submissionsResponse] = await Promise.all([
-        getUserProfile(),
-        getUserSubmissions()
-      ]);
-      
+      const profileResponse = await getUserProfile();
       const profileData = profileResponse.data || profileResponse;
-      const submissionsData = submissionsResponse.data || submissionsResponse;
-      
       setProfile(profileData);
-      setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
-      
-      // If user is a company, fetch their challenges to calculate stats
+
       if (profileData.role === 'company') {
-        try {
-          const challengesResponse = await getChallenges();
-          if (challengesResponse.success) {
-            // Filter challenges created by this company
-            const companyChallenges = challengesResponse.data.filter(c => 
-              c.companyId && String(c.companyId._id) === String(authUser.id)
-            );
-            
-            setCompanyStats({
-              challengesCreated: companyChallenges.length,
-              submissionsReviewed: profileData.submissionsReviewed || 0
-            });
+        // Company profiles show activity from the company's own challenges and submissions.
+        const [challengesResult, submissionsResult] = await Promise.all([
+          getChallenges(),
+          getCompanySubmissions('all', 1, 50)
+        ]);
+
+        const companyId = authUser?.id || profileData._id;
+        const challengeList = challengesResult.success ? (challengesResult.data || []) : [];
+        const companyChallenges = challengeList.filter(challenge => {
+          const ownerId = typeof challenge.companyId === 'object'
+            ? challenge.companyId?._id
+            : challenge.companyId;
+          return ownerId && String(ownerId) === String(companyId);
+        });
+
+        let companySubmissions = submissionsResult.success ? (submissionsResult.data || []) : [];
+        const totalPages = submissionsResult.pagination?.totalPages || 1;
+        for (let page = 2; page <= totalPages; page += 1) {
+          const pageResult = await getCompanySubmissions('all', page, 50);
+          if (pageResult.success && Array.isArray(pageResult.data)) {
+            companySubmissions = companySubmissions.concat(pageResult.data);
           }
-        } catch (challengeError) {
-          console.error('Error fetching company challenges:', challengeError);
-          // Don't fail the entire page if challenges can't be fetched
-          setCompanyStats({
-            challengesCreated: 0,
-            submissionsReviewed: profileData.submissionsReviewed || 0
-          });
         }
+
+        setSubmissions([]);
+        setCompanyActivity(companySubmissions);
+        setCompanyStats({
+          challengesCreated: companyChallenges.length,
+          submissionsReviewed: companySubmissions.filter(submission =>
+            ['approved', 'rejected'].includes(submission.status)
+          ).length
+        });
+      } else {
+        const submissionsResponse = await getUserSubmissions();
+        const submissionsData = submissionsResponse.data || submissionsResponse;
+        setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
+        setCompanyActivity([]);
       }
       
       // Set edit data
@@ -476,18 +485,58 @@ const ProfilePage = () => {
               </div>
 
               {profile?.role === 'company' ? (
-                <div className="text-center py-8">
-                  <Trophy className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Company Dashboard</h4>
-                  <p className="text-gray-600 mb-4">Manage your challenges and review submissions from your company dashboard.</p>
-                  <Link
-                    to="/company"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Go to Dashboard
-                  </Link>
-                </div>
+                companyActivity.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Trophy className="w-12 h-12 text-blue-400 mx-auto mb-3" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">No company activity yet</h4>
+                    <p className="text-gray-600 mb-4">Create a challenge to start receiving student submissions and activity here.</p>
+                    <Link to="/company" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Go to Company Dashboard
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {companyActivity.slice(0, 10).map((submission, index) => {
+                      const studentName = submission.user?.name || submission.user?.username || 'Student';
+                      const challengeTitle = submission.challenge?.title || 'Challenge';
+                      const statusLabel = submission.status === 'pending'
+                        ? (submission.viewedAt ? 'Viewed' : 'Submitted')
+                        : submission.status.charAt(0).toUpperCase() + submission.status.slice(1);
+                      const statusClass = submission.status === 'approved'
+                        ? 'bg-green-100 text-green-700'
+                        : submission.status === 'rejected'
+                          ? 'bg-red-100 text-red-700'
+                          : submission.status === 'reviewing'
+                            ? 'bg-blue-100 text-blue-700'
+                            : submission.viewedAt
+                              ? 'bg-cyan-100 text-cyan-700'
+                              : 'bg-amber-100 text-amber-700';
+                      const activityDate = submission.reviewedAt || submission.viewedAt || submission.submittedAt;
+                      return (
+                        <Link
+                          key={submission._id}
+                          to={`/submissions/${submission._id}/review`}
+                          className="block border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900">{challengeTitle}</p>
+                              <p className="text-sm text-gray-600 mt-1">{studentName} submitted a solution</p>
+                              <p className="text-xs text-gray-500 mt-2">
+                                {activityDate && !Number.isNaN(new Date(activityDate).getTime())
+                                  ? new Date(activityDate).toLocaleString()
+                                  : 'Date unavailable'}
+                              </p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClass}`}>{statusLabel}</span>
+                          </div>
+                          <p className="text-xs text-blue-600 font-medium mt-3">Open submission review →</p>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )
               ) : submissions.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
