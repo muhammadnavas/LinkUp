@@ -86,6 +86,16 @@ export const getUserSubmissions = async () => {
   return handleResponse(res);
 };
 
+// Update a submission while it has not been viewed by the company
+export const updateSubmission = async (submissionId, submissionData) => {
+  const res = await fetch(`${API_BASE_URL}/submissions/${submissionId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(submissionData)
+  });
+  return handleResponse(res);
+};
+
 // Get a specific submission
 export const getSubmission = async (submissionId) => {
   const res = await fetch(`${API_BASE_URL}/submissions/${submissionId}`, { headers: getAuthHeaders() });
