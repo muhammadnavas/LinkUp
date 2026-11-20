@@ -150,7 +150,7 @@ const SubmissionsPage = () => {
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                {status} (
+                {!challengeId && status === 'pending' ? 'Submitted' : status} (
                 {submissions.filter(
                   (s) => status === 'all' || s.status === status
                 ).length}
