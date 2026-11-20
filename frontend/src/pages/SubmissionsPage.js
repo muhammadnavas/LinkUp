@@ -230,7 +230,7 @@ const SubmissionsPage = () => {
                           submission.status
                         )}`}
                       >
-                        {submission.status}
+                        {!challengeId && submission.status === 'pending' ? (submission.viewedAt ? 'Viewed by company' : 'Submitted') : submission.status}
                       </span>
                     </div>
                   </div>
@@ -305,6 +305,24 @@ const SubmissionsPage = () => {
                         </div>
                       </div>
                     )}
+
+                  {!challengeId && submission.status === 'pending' && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
+                      <p className="text-sm text-gray-600">
+                        {submission.viewedAt
+                          ? 'The company has opened this submission. Editing is locked.'
+                          : 'The company has not opened this submission yet. You can still edit it.'}
+                      </p>
+                      {!submission.viewedAt && submission.challenge?._id && (
+                        <Link
+                          to={`/challenge/${submission.challenge._id}`}
+                          className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                          Edit Submission
+                        </Link>
+                      )}
+                    </div>
+                  )}
 
                   {/* Feedback */}
                   {submission.feedback && (
